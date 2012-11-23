@@ -3,6 +3,7 @@
 *.jar
 *.docx
 words.txt
+words/
 /*/bin/
 /*/target/
 /target/

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -14,6 +15,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+
+import com.stoyanr.util.Logger;
 
 @RunWith(Parameterized.class)
 public class WordCounterPerfTest {
@@ -43,26 +46,27 @@ public class WordCounterPerfTest {
     private WordCounter counter;
 
     public WordCounterPerfTest(int numFiles, int maxWords) {
-        super();
         this.numFiles = numFiles;
         this.maxWords = maxWords;
     }
 
     @Before
     public void setUp() {
+        Logger.level = Logger.Level.INFO;
         counter = new WordCounter(DELIMS, 4);
     }
 
     @Test
-    public void testCountWordsDirectoryTree() throws Exception {
-        Map<String, Integer> expected = new HashMap<>();
-        File tree = tree(expected);
-        System.out.printf("Processin %d files ...\n", numFiles);
+    public void test() throws Exception {
+        Map<String, Integer> counts = new HashMap<>();
+        File tree = tree(counts);
+        System.out.printf("Processing %d files ...\n", numFiles);
         long time0 = System.currentTimeMillis();
-        Map<String, Integer> result = counter.countWords(tree);
+        Map<String, Integer> countsx = counter.countWords(tree);
         long time1 = System.currentTimeMillis();
         System.out.printf("Processed %d files in %d ms\n", numFiles, (time1 - time0));
-        TestUtils.assertEqualMaps(expected, result);
+        printCounts(countsx);
+        TestUtils.assertEqualMaps(counts, countsx);
     }
 
     private File tree(Map<String, Integer> counts) throws IOException {
@@ -95,6 +99,14 @@ public class WordCounterPerfTest {
         for (int i = 0; i < numDelims; i++) {
             int index = (int) (Math.random() * DELIMS.length());
             sb.append(DELIMS.charAt(index));
+        }
+    }
+    
+    private void printCounts(Map<String, Integer> counts) {
+        for (Entry<String, Integer> e : counts.entrySet()) {
+            String word = e.getKey();
+            int count = e.getValue();
+            System.out.printf("%12s: %d\n", word, count);
         }
     }
 

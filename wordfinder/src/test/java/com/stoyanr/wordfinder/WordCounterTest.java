@@ -21,7 +21,7 @@ import org.junit.runners.Parameterized.Parameters;
 public class WordCounterTest {
 
     private static final String TEXT1 = "one two three one two one";
-    private static final String TEXT2 = "five six\tseven123\nfive";
+    private static final String TEXT2 = "five six\tseven123#five";
     private static final String TEXT3 = "eight; nine\t?!ten10<eleven...eight";
     private static final Map<String, Integer> COUNTS1 = new HashMap<>();
     private static final Map<String, Integer> COUNTS2 = new HashMap<>();

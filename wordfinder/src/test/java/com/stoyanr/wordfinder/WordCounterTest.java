@@ -17,16 +17,18 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-/**
- * @author Stoyan Rachev
- */
 @RunWith(Parameterized.class)
 public class WordCounterTest {
 
     private static final String TEXT1 = "one two three one two one";
     private static final String TEXT2 = "five six\tseven123\nfive";
+    private static final String TEXT3 = "eight; nine\t?!ten10<eleven...eight";
     private static final Map<String, Integer> COUNTS1 = new HashMap<>();
     private static final Map<String, Integer> COUNTS2 = new HashMap<>();
+    private static final Map<String, Integer> COUNTS3 = new HashMap<>();
+
+    private static final String DELIMS = WordCounter.DEFAULT_DELIMITERS
+        + ";,.:?!/\\'\"()[]{}<>+-*=~@#$%^&|`";
 
     private static final String DIR = "words";
     private static final String FILE = "words.txt";
@@ -35,6 +37,7 @@ public class WordCounterTest {
         // @formatter:off
         COUNTS1.put("one", 3); COUNTS1.put("two", 2); COUNTS1.put("three", 1);
         COUNTS2.put("five", 2); COUNTS2.put("six", 1); COUNTS2.put("seven123", 1);
+        COUNTS3.put("eight", 2); COUNTS3.put("nine", 1); COUNTS3.put("ten10", 1); COUNTS3.put("eleven", 1);
         // @formatter:on
     }
 
@@ -45,6 +48,7 @@ public class WordCounterTest {
             { asList(TEXT1), asList(COUNTS1) }, 
             { asList(TEXT2), asList(COUNTS2) }, 
             { asList(TEXT1, TEXT2), asList(COUNTS1, COUNTS2) }, 
+            { asList(TEXT3), asList(COUNTS3) }, 
         };
         // @formatter:on
         return asList(data);
@@ -62,44 +66,45 @@ public class WordCounterTest {
 
     @Before
     public void setUp() {
-        counter = new WordCounter();
+        counter = new WordCounter(DELIMS, 4);
     }
 
     @Test
     public void testCountWordsString() {
-        Map<String, Integer> result = counter.countWords(text(texts));
-        assertEquals(combine(countsList), result);
+        Map<String, Integer> result = counter.countWords(text());
+        assertEquals(combine(), result);
     }
 
     @Test
     public void testCountWordsFile() throws Exception {
-        Map<String, Integer> result = counter.countWords(file(texts));
-        assertEquals(combine(countsList), result);
+        Map<String, Integer> result = counter.countWords(file());
+        assertEquals(combine(), result);
     }
 
     @Test
-    public void testCountWordsDirectoryTree() throws Exception {
-        Map<String, Integer> result = counter.countWords(tree(texts));
-        assertEquals(combine(countsList), result);
+    public void testCountWordsTree() throws Exception {
+        Map<String, Integer> result = counter.countWords(tree());
+        Map<String, Integer> expected = combine();
+        TestUtils.assertEqualMaps(expected, result);
     }
 
-    private static String text(List<String> texts) {
-        StringBuilder s = new StringBuilder();
+    private String text() {
+        StringBuilder sb = new StringBuilder();
         for (String text : texts) {
-            s.append(text + "\n");
+            sb.append(text + "\n");
         }
-        return s.toString();
+        return sb.toString();
     }
 
-    private static File file(List<String> texts) throws IOException {
+    private File file() throws IOException {
         File file = new File(FILE);
-        FileUtils.writeStringToFile(file, text(texts));
+        FileUtils.writeStringToFile(file, text());
         return file;
     }
 
-    private static File tree(List<String> texts) throws IOException {
+    private File tree() throws IOException {
         File dir = new File(DIR);
-        deleteDir(dir);
+        TestUtils.deleteDir(dir);
         dir.mkdirs();
         int count = 0;
         for (String text : texts) {
@@ -111,16 +116,7 @@ public class WordCounterTest {
         return dir;
     }
 
-    private static void deleteDir(File dir) {
-        while (dir.exists()) {
-            try {
-                FileUtils.deleteDirectory(dir);
-            } catch (IOException e) {
-            }
-        }
-    }
-
-    private static Map<String, Integer> combine(List<Map<String, Integer>> countsList) {
+    private Map<String, Integer> combine() {
         Map<String, Integer> result = new HashMap<>();
         for (Map<String, Integer> counts : countsList) {
             WordCounter.addCounts(result, counts);

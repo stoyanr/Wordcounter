@@ -87,7 +87,7 @@ public class WordCountAnalyzerTest {
     }
 
     private static Comparator<Integer> comparator() {
-        return new WordCountAnalyzer.ReverseComparator();
+        return new FindTopAnalysisFactory.ReverseComparator();
     }
 
 }

@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -17,7 +16,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.stoyanr.util.Logger;
-import com.stoyanr.wordcounter.WordCounter;
 
 @RunWith(Parameterized.class)
 public class WordCounterPerfTest {
@@ -96,7 +94,9 @@ public class WordCounterPerfTest {
             int index = (int) (Math.random() * VOCABULARY.length);
             String word = VOCABULARY[index];
             sb.append(word);
-            appendDelimiters(sb);
+            if (i < numWords - 1) {
+                appendDelimiters(sb);
+            }
             counts.put(word, (counts.containsKey(word)) ? counts.get(word) + 1 : 1);
         }
         return sb.toString();

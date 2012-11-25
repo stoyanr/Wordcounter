@@ -74,12 +74,12 @@ public class WordCountAnalyzerTest {
 
     @Test
     public void testAnalyze() {
-        assertEquals(TestUtils.getHead(sorted, top), analyzer.analyze(counts, top));
+        assertEquals(TestUtils.getHead(sorted, top), analyzer.findTop(counts, top, true));
     }
 
     @Test
     public void testAnalyzeParallel() {
-        assertEquals(TestUtils.getHead(sorted, top), analyzer.analyze(counts, top, true));
+        assertEquals(TestUtils.getHead(sorted, top), analyzer.findTop(counts, top, true, true));
     }
 
     private static Set<String> asSet(String... strings) {

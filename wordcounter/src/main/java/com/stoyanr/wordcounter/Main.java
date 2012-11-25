@@ -18,7 +18,6 @@
 package com.stoyanr.wordcounter;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -39,12 +38,13 @@ public class Main {
         + "#," + ARG_MODE + "*," + ARG_LEVEL + "*";
 
     private static final String MODE_TOP = "top";
+    private static final String MODE_BOTTOM = "bottom";
 
     private static final String LEVEL_ERROR = "error";
     private static final String LEVEL_WARNING = "warining";
     private static final String LEVEL_INFO = "info";
     private static final String LEVEL_DEBUG = "debug";
-    
+
     private static final String DEFAULT_PATH = ".";
     private static final String DEFAULT_DELIMS = WordCounter.DEFAULT_DELIMITERS;
     private static final int DEFAULT_NUMBER = 10;
@@ -84,8 +84,18 @@ public class Main {
     public final void run() {
         try {
             setLogLevel();
-            if (mode.equals(MODE_TOP)) {
-                runTop();
+            WordCounter counter = new WordCounter(delims);
+            Map<String, Integer> counts = counter.countWords(new File(path), true);
+            if (Logger.isDebug()) {
+                printCounts(counts);
+            }
+            WordCountAnalyzer analyzer = new WordCountAnalyzer();
+            if (mode.equals(MODE_TOP) || mode.equals(MODE_BOTTOM)) {
+                int numberx = Math.min(counts.size(), number);
+                boolean top = mode.equals(MODE_TOP);
+                SortedMap<Integer, Set<String>> sorted = analyzer.findTop(counts, numberx, top,
+                    true);
+                printSorted(sorted, number, top);
             }
         } catch (final Exception e) {
             reportError(e);
@@ -108,18 +118,6 @@ public class Main {
             break;
         }
     }
-    
-    private void runTop() throws IOException {
-        WordCounter counter = new WordCounter(delims);
-        Map<String, Integer> counts = counter.countWords(new File(path), true);
-        if (Logger.isDebug()) {
-            printCounts(counts);
-        }
-        WordCountAnalyzer analyzer = new WordCountAnalyzer();
-        int top = Math.min(counts.size(), number);
-        SortedMap<Integer, Set<String>> sorted = analyzer.analyze(counts, top, true);
-        printSorted(sorted, top);
-    }
 
     static void printCounts(Map<String, Integer> counts) {
         Logger.debug("Printing raw word counts");
@@ -130,15 +128,15 @@ public class Main {
         }
     }
 
-    static void printSorted(SortedMap<Integer, Set<String>> sorted, int top) {
-        Logger.debug("Printing top %d words", top);
+    static void printSorted(SortedMap<Integer, Set<String>> sorted, int number, boolean top) {
+        Logger.debug("Printing %s %d words", (top) ? "top" : "bottom", number);
         int i = 0;
         for (Entry<Integer, Set<String>> e : sorted.entrySet()) {
             int count = e.getKey();
             Set<String> words = e.getValue();
             for (String word : words) {
                 System.out.printf("%20s: %d\n", word, count);
-                if (++i == top) {
+                if (++i == number) {
                     return;
                 }
             }

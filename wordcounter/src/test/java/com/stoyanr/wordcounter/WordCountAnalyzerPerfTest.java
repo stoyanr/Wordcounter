@@ -68,7 +68,7 @@ public class WordCountAnalyzerPerfTest {
     private void testx(boolean parallel) throws Exception {
         System.out.printf("Processing %d words (parallel: %b) ...\n", counts.size(), parallel);
         long time0 = System.currentTimeMillis();
-        SortedMap<Integer, Set<String>> sortedx = analyzer.analyze(counts, top, parallel);
+        SortedMap<Integer, Set<String>> sortedx = analyzer.findTop(counts, top, true, parallel);
         long time1 = System.currentTimeMillis();
         System.out.printf("Analyzed %d words in %d ms\n", counts.size(), (time1 - time0));
         printSorted(sortedx);
@@ -115,7 +115,7 @@ public class WordCountAnalyzerPerfTest {
 
     private void printSorted(SortedMap<Integer, Set<String>> sorted) {
         if (Logger.isDebug()) {
-            Main.printSorted(sorted, top);
+            Main.printSorted(sorted, top, true);
         }
     }
 

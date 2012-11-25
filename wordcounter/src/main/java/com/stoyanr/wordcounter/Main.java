@@ -145,7 +145,9 @@ public class Main {
 
     private static void reportError(final Exception e) {
         System.out.printf("%s: %s\n", e.getClass().getSimpleName(), e.getMessage());
-        e.printStackTrace();
+        if (Logger.isDebug()) {
+            e.printStackTrace();
+        }
     }
 
     /**

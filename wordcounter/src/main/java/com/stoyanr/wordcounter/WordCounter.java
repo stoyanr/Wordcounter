@@ -1,10 +1,26 @@
+/*
+ * $Id: $
+ *
+ * Copyright 2012 Stoyan Rachev (stoyanr@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.stoyanr.wordcounter;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.HashMap;
@@ -51,8 +67,9 @@ class WordCounter {
     }
 
     public Map<String, Integer> countWords(String text) {
-        if (text == null)
-            throw new IllegalArgumentException();
+        if (text == null) {
+            throw new IllegalArgumentException("Text is null");
+        }
         return countWords(new StringTokenizer(text, delimiters));
     }
 
@@ -71,8 +88,9 @@ class WordCounter {
     }
 
     public Map<String, Integer> countWords(File file, boolean parallel) throws IOException {
-        if (file == null || !file.exists())
-            throw new IllegalArgumentException();
+        if (file == null || !file.exists()) {
+            throw new IllegalArgumentException("File is null or doesn't exist.");
+        }
         return (parallel) ? countWordsParallel(file) : countWordsSequential(file);
     }
 
@@ -80,14 +98,9 @@ class WordCounter {
         final Map<String, Integer> result;
         if (file.isDirectory()) {
             result = new HashMap<>();
-            FileProcessor fp = new FileProcessor() {
-                @Override
-                public void process(Path file) throws IOException {
-                    add(result, countWords(FileUtils.readFileToString(file)));
-                }
-            };
             Files.walkFileTree(Paths.get(file.getPath()), OPTIONS, Integer.MAX_VALUE,
-                new WordCounterVisitor(fp));
+                new WordCounterFileVisitor((filex) -> 
+                    add(result, countWords(FileUtils.readFileToString(filex)))));
         } else {
             result = countWords(FileUtils.readFileToString(Paths.get(file.getPath())));
         }
@@ -106,6 +119,8 @@ class WordCounter {
             boolean terminated = shutdownCounters(counters);
             assert (terminated);
         } catch (InterruptedException e) {
+            throw new WordCounterException(String.format("Interrupted while counting: %s", 
+                e.getMessage()), e);
         }
         return result;
     }
@@ -113,7 +128,7 @@ class WordCounter {
     private ScheduledExecutorService createReaders(final File file,
         final BlockingQueue<String> queue) {
         ScheduledExecutorService readers = new ScheduledThreadPoolExecutor(1);
-        readers.submit(new ReaderRunnableFactory(file, queue, this).getRunnable());
+        readers.submit(new Reader(file, queue, this)::read);
         return readers;
     }
 
@@ -121,7 +136,7 @@ class WordCounter {
         final ConcurrentMap<String, Integer> counts) {
         ScheduledExecutorService counters = new ScheduledThreadPoolExecutor(PAR);
         for (int i = 0; i < PAR; i++) {
-            counters.submit(new CounterRunnableFactory(queue, counts, this).getRunnable());
+            counters.submit(new Counter(queue, counts, this)::count);
         }
         return counters;
     }
@@ -136,6 +151,7 @@ class WordCounter {
         return counters.awaitTermination(2, TimeUnit.SECONDS);
     }
 
+    @SuppressWarnings("empty-statement")
     private void waitForEmpty(BlockingQueue<String> queue) {
         while (!queue.isEmpty())
             ;

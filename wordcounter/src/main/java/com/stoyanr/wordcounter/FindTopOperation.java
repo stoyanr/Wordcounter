@@ -1,3 +1,20 @@
+/*
+ * $Id: $
+ *
+ * Copyright 2012 Stoyan Rachev (stoyanr@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.stoyanr.wordcounter;
 
 import java.util.Comparator;
@@ -8,15 +25,16 @@ import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-final class FindTopAnalysisFactory implements AnalysisFactory<SortedMap<Integer, Set<String>>> {
+final class FindTopOperation implements AnalysisOperation<SortedMap<Integer, Set<String>>> {
 
     private final Set<Entry<String, Integer>> entries;
     private final int number;
     private final boolean top;
 
-    FindTopAnalysisFactory(Set<Entry<String, Integer>> entries, int number, boolean top) {
-        if (number < 0 || number > entries.size())
+    FindTopOperation(Set<Entry<String, Integer>> entries, int number, boolean top) {
+        if (number < 0 || number > entries.size()) {
             throw new IllegalArgumentException();
+        }
         this.entries = entries;
         this.number = (number != 0) ? number : entries.size();
         this.top = top;
@@ -24,32 +42,20 @@ final class FindTopAnalysisFactory implements AnalysisFactory<SortedMap<Integer,
 
     @Override
     public Analyzer<SortedMap<Integer, Set<String>>> getAnalyzer() {
-        return new Analyzer<SortedMap<Integer, Set<String>>>() {
-            @Override
-            public SortedMap<Integer, Set<String>> analyze(int lo, int hi) {
-                return findTop(lo, hi);
-            }
-        };
+        return (lo, hi) -> findTop(lo, hi);
     }
 
     @Override
     public Merger<SortedMap<Integer, Set<String>>> getMerger() {
-        return new Merger<SortedMap<Integer, Set<String>>>() {
-            @Override
-            public SortedMap<Integer, Set<String>> merge(SortedMap<Integer, Set<String>> r1,
-                SortedMap<Integer, Set<String>> r2) {
-                add(r1, r2);
-                return r1;
-            }
+        return (r1, r2) -> { 
+            add(r1, r2);   
+            return r1;
         };
     }
 
     private SortedMap<Integer, Set<String>> findTop(int lo, int hi) {
-        // @formatter:off
-        SortedMap<Integer, Set<String>> result = (top) ? 
-            new TreeMap<Integer, Set<String>>(new ReverseComparator()) : 
-            new TreeMap<Integer, Set<String>>();
-        // @formatter:on
+        Comparator<Integer> comparator = (top) ? (x, y) -> (y - x) : Integer::compare;
+        SortedMap<Integer, Set<String>> result = new TreeMap<Integer, Set<String>>(comparator);
         Iterator<Entry<String, Integer>> it = entries.iterator();
         advance(it, lo);
         for (int i = lo; i < hi; i++) {
@@ -95,20 +101,14 @@ final class FindTopAnalysisFactory implements AnalysisFactory<SortedMap<Integer,
     }
 
     private static void advance(Iterator<Entry<String, Integer>> it, int lo) {
-        for (int i = 0; i < lo; i++)
+        for (int i = 0; i < lo; i++) {
             it.next();
+        }
     }
 
     private static Set<String> getSet(String word) {
         Set<String> set = new HashSet<>();
         set.add(word);
         return set;
-    }
-
-    static final class ReverseComparator implements Comparator<Integer> {
-        @Override
-        public int compare(Integer o1, Integer o2) {
-            return o2 - o1;
-        }
     }
 }

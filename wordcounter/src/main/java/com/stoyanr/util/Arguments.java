@@ -122,7 +122,8 @@ public class Arguments {
         try {
             result = Integer.parseInt(value);
         } catch (NumberFormatException e) {
-            throw new ArgumentsException(e);
+            throw new ArgumentsException(String.format("Can't parse %s to a number: %s", value, 
+                e.getMessage()), e);
         }
         return result;
     }

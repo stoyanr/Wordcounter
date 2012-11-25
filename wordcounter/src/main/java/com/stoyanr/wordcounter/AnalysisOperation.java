@@ -15,16 +15,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.stoyanr.util;
+package com.stoyanr.wordcounter;
 
-public class ArgumentsException extends RuntimeException {
-
-    public ArgumentsException() {
-        super();
+interface AnalysisOperation<T> {
+    interface Analyzer<T> {
+        T analyze(int lo, int hi);
     }
+    
+    interface Merger<T> {
+        T merge(T result1, T result2);
+    }    
+    
+    Analyzer<T> getAnalyzer();
 
-    public ArgumentsException(final String msg, final Exception cause) {
-        super(msg, cause);
-    }
-
+    Merger<T> getMerger();
 }

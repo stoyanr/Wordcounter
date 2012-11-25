@@ -1,3 +1,20 @@
+/*
+ * $Id: $
+ *
+ * Copyright 2012 Stoyan Rachev (stoyanr@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.stoyanr.wordcounter;
 
 import static com.stoyanr.util.Logger.debug;
@@ -8,30 +25,20 @@ import java.util.Map.Entry;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentMap;
 
-class CounterRunnableFactory implements RunnableFactory {
+class Counter {
     
     private final BlockingQueue<String> queue;
     private final ConcurrentMap<String, Integer> counts;
     private final WordCounter wc;
     
-    public CounterRunnableFactory(BlockingQueue<String> queue, ConcurrentMap<String, Integer> counts,
+    public Counter(BlockingQueue<String> queue, ConcurrentMap<String, Integer> counts,
         WordCounter wc) {
         this.queue = queue;
         this.counts = counts;
         this.wc = wc;
     }
 
-    @Override
-    public Runnable getRunnable() {
-        return new Runnable() {
-            @Override
-            public void run() {
-                count();
-            }
-        };
-    }
-
-    private void count() {
+    void count() {
         boolean finished = false;
         while (!finished) {
             try {
@@ -44,8 +51,7 @@ class CounterRunnableFactory implements RunnableFactory {
         }
     }
 
-    private String consumeText()
-        throws InterruptedException {
+    private String consumeText() throws InterruptedException {
         long t0 = logCounterQueueEmpty();
         String text = queue.take();
         logCounterWaitTime(t0);
@@ -75,7 +81,7 @@ class CounterRunnableFactory implements RunnableFactory {
     }
 
     private static void add(ConcurrentMap<String, Integer> m, String word, int count) {
-        boolean put = false;
+        boolean put;
         do {
             Integer cc = m.get(word);
             if (cc != null) {

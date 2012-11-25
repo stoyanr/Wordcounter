@@ -1,3 +1,20 @@
+/*
+ * $Id: $
+ *
+ * Copyright 2012 Stoyan Rachev (stoyanr@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.stoyanr.wordcounter;
 
 import static com.stoyanr.util.Logger.debug;
@@ -12,34 +29,22 @@ import java.nio.file.Paths;
 import java.util.EnumSet;
 import java.util.concurrent.BlockingQueue;
 
-final class ReaderRunnableFactory implements RunnableFactory {
+final class Reader {
 
     private static final int MAX_ST_SIZE = 1024 * 1024;
-
     private static final EnumSet<FileVisitOption> OPTIONS = EnumSet
         .of(FileVisitOption.FOLLOW_LINKS);
-
     private final File file;
     private final BlockingQueue<String> queue;
     private final WordCounter wc;
 
-    ReaderRunnableFactory(File file, BlockingQueue<String> queue, WordCounter wc) {
+    Reader(File file, BlockingQueue<String> queue, WordCounter wc) {
         this.file = file;
         this.queue = queue;
         this.wc = wc;
     }
 
-    @Override
-    public Runnable getRunnable() {
-        return new Runnable() {
-            @Override
-            public void run() {
-                read();
-            }
-        };
-    }
-
-    private void read() {
+    void read() {
         try {
             if (file.isDirectory()) {
                 readDirectory(Paths.get(file.getPath()));
@@ -47,17 +52,14 @@ final class ReaderRunnableFactory implements RunnableFactory {
                 readFile(Paths.get(file.getPath()));
             }
         } catch (IOException e) {
+            throw new WordCounterException(String.format("Can't read file %s: %s", file.toString(), 
+                e.getMessage()), e);
         }
     }
 
     private void readDirectory(Path dir) throws IOException {
-        FileProcessor fp = new FileProcessor() {
-            @Override
-            public void process(Path file) throws IOException {
-                readFile(file);
-            }
-        };
-        Files.walkFileTree(dir, OPTIONS, Integer.MAX_VALUE, new WordCounterVisitor(fp));
+        Files.walkFileTree(dir, OPTIONS, Integer.MAX_VALUE, 
+            new WordCounterFileVisitor((file) -> readFile(file)));
     }
 
     private void readFile(final Path file) throws IOException {
@@ -67,23 +69,26 @@ final class ReaderRunnableFactory implements RunnableFactory {
                 logReaderJobDone(file, text);
                 produceText(text);
             } else {
-                FileUtils.readFileAsync(file, new TextProcessor<String>() {
-                    @Override
-                    public String process(String text, String state) throws InterruptedException {
-                        int ei = wc.getEndIndex(text);
-                        String rem = (state != null)? state : "";
-                        String textx = rem + text.substring(0, ei);
-                        rem = text.substring(ei);
-                        logReaderJobDone(file, textx);
-                        produceText(textx);
-                        return rem;
-                    }
+                FileUtils.readFileAsync(file, (String text, String state) -> {
+                    logReaderJobDone(file, text);
+                    return produceText(text, state);
                 });
             }
         } catch (InterruptedException e) {
+            throw new WordCounterException(String.format("Interrupted while reading file %s: %s", 
+                file.toString(), e.getMessage()), e);
         }
     }
 
+    private String produceText(String text, String state) throws InterruptedException {
+        int ei = wc.getEndIndex(text);
+        String rem = (state != null) ? state : "";
+        String textx = rem + text.substring(0, ei);
+        rem = text.substring(ei);
+        produceText(textx);
+        return rem;
+    }
+    
     private void produceText(String text)
         throws InterruptedException {
         long t0 = logReaderQueueFull();
@@ -120,5 +125,4 @@ final class ReaderRunnableFactory implements RunnableFactory {
     private static String getThreadName() {
         return Thread.currentThread().getName();
     }
-
 }

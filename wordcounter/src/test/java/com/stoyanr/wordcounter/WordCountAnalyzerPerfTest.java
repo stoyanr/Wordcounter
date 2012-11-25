@@ -1,3 +1,20 @@
+/*
+ * $Id: $
+ *
+ * Copyright 2012 Stoyan Rachev (stoyanr@gmail.com)
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.stoyanr.wordcounter;
 
 import static java.util.Arrays.asList;
@@ -39,16 +56,16 @@ public class WordCountAnalyzerPerfTest {
 
     private final int numWords;
     private final int maxCount;
-    private final int top;
+    private final int number;
 
     private WordCountAnalyzer analyzer;
     private Map<String, Integer> counts;
     private SortedMap<Integer, Set<String>> sorted;
 
-    public WordCountAnalyzerPerfTest(int numWords, int maxCount, int top) {
+    public WordCountAnalyzerPerfTest(int numWords, int maxCount, int number) {
         this.numWords = numWords;
         this.maxCount = maxCount;
-        this.top = top;
+        this.number = number;
     }
 
     @Before
@@ -68,7 +85,7 @@ public class WordCountAnalyzerPerfTest {
     private void testx(boolean parallel) throws Exception {
         System.out.printf("Processing %d words (parallel: %b) ...\n", counts.size(), parallel);
         long time0 = System.currentTimeMillis();
-        SortedMap<Integer, Set<String>> sortedx = analyzer.findTop(counts, top, true, parallel);
+        SortedMap<Integer, Set<String>> sortedx = analyzer.findTop(counts, number, true, parallel);
         long time1 = System.currentTimeMillis();
         System.out.printf("Analyzed %d words in %d ms\n", counts.size(), (time1 - time0));
         printSorted(sortedx);
@@ -110,16 +127,16 @@ public class WordCountAnalyzerPerfTest {
                 sorted.put(count, set);
             }
         }
-        return TestUtils.getHead(sorted, top);
+        return TestUtils.getHead(sorted, number);
     }
 
     private void printSorted(SortedMap<Integer, Set<String>> sorted) {
         if (Logger.isDebug()) {
-            Main.printSorted(sorted, top, true);
+            Main.printSorted(sorted, number, true);
         }
     }
 
     private static Comparator<Integer> comparator() {
-        return new FindTopAnalysisFactory.ReverseComparator();
+        return (x, y) -> (y - x);
     }
 }

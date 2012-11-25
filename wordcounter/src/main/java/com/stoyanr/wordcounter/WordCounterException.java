@@ -15,15 +15,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.stoyanr.util;
+package com.stoyanr.wordcounter;
 
-public class ArgumentsException extends RuntimeException {
+public class WordCounterException extends RuntimeException {
 
-    public ArgumentsException() {
+    public WordCounterException() {
         super();
     }
 
-    public ArgumentsException(final String msg, final Exception cause) {
+    public WordCounterException(final String msg, final Exception cause) {
         super(msg, cause);
     }
 

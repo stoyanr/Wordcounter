@@ -2,7 +2,7 @@
 
 **Wordcounter** is a Java library and command-line utility for counting words in text files and directory trees and performing analysis on the word counts, such as finding the top X most used words in all files. It makes heavy use of parallel computing to use all available cores when performing the analysis.
 
-The library uses JDK 8 [lambdas](http://openjdk.java.net/projects/lambda/), as well as new JDK 7 features such as [Fork / Join](http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) and [NIO.2](http://docs.oracle.com/javase/tutorial/essential/io/fileio.html). It is built with the [early access version of JDK 8 with lambda support](http://jdk8.java.net/lambda/).
+The library uses JDK 8 [lambdas](http://openjdk.java.net/projects/lambda/), as well as new JDK 7 features such as [Fork / Join](http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) and [NIO.2](http://docs.oracle.com/javase/tutorial/essential/io/fileio.html). It is built and can only be used with the [early access version of JDK 8 with lambda support](http://jdk8.java.net/lambda/).
 
 With the introduction of lambdas and their supporting features in JDK 8, the way we build software in Java is going to change. If you would like to get an idea how your Java code may look like in a few years, you may take a look at Wordcounter. Unlike most resources available at the moment, this is not a tutorial, but a real working project.
 

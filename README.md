@@ -15,8 +15,6 @@ The latest binary, javadoc, and sources packages can be found in [downloads](htt
 
 This work is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
-**Feedback, comments, and contributions are welcome!**
-
 ## <a id="Overview"></a>Overview
 
 ### Library Features
@@ -30,13 +28,13 @@ This work is licensed under the [Apache License, Version 2.0](http://www.apache.
 + Uses [Producer / Consumer](http://en.wikipedia.org/wiki/Producer-consumer_problem) for counting the words in parallel threads while reading them. A single producer task reads all files to strings and puts them in a `BlockingQueue`. Multiple consumer threads take strings from the queue and count their words, accumulating the result in a `ConcurrentHashMap`.
 + Uses [Fork / Join](http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) for performing analysis on the word counts. With large maps, a `RecursiveTask` forks itself until reaching the desired concurrency level and then joins the results.
 + Uses [NIO.2](http://docs.oracle.com/javase/tutorial/essential/io/fileio.html) for traversing directory trees and reading files.
-+ Makes heavy use of functional interfaces and [lambdas](http://openjdk.java.net/projects/lambda/) in order to pass functions rather than data when appropriate.  
-+ There are comprehensive **unit and performance tests** for the two most important classes. 
-+ As usual, the code is **clean, well-structured, and easy to read**. Formatting, naming, and comments are uniform and consistent. A lot of attention has been put in the appropriate use of both object-oriented and functional programming techniques.
++ Makes heavy use of [functional interfaces](http://www.lambdafaq.org/what-is-a-functional-interface/) and [lambdas](http://openjdk.java.net/projects/lambda/) in order to pass functions rather than data when appropriate.  
++ There are comprehensive unit and performance tests for the two most important classes. 
++ As usual, the code is clean, well-structured, and easy to read. Formatting, naming, and comments are uniform and consistent. A lot of attention has been put to the appropriate use of both object-oriented and functional programming techniques.
 
 ### History
 
-Similarly to [Feeder](https://github.com/stoyanr/Feeder), [Feeder](https://github.com/stoyanr/Todor), and [Hanoier](https://github.com/stoyanr/Hanoier), Wordcounter was originally created in November 2012 for an internal "geeks" contest at [SAP](http://www.sap.com). The contest task requested to implement an algorithm using Fork / Join and lambdas that analyzes all files in a directory and finds the ten most used words in the files together with how many times they occur. Rather than simply sticking with Fork / Join, I attempted to find the most suitable parallel approach for this task, which led me to some interesting discoveries.
+Similarly to [Feeder](https://github.com/stoyanr/Feeder), [Todor](https://github.com/stoyanr/Todor), and [Hanoier](https://github.com/stoyanr/Hanoier), Wordcounter was originally created in November 2012 for an internal "geeks" contest at [SAP](http://www.sap.com). The contest task requested to implement an algorithm using Fork / Join and lambdas that analyzes all files in a directory and finds the ten most used words in the files together with how many times they occur. Rather than simply sticking with Fork / Join, I tried to find the most suitable parallel approach for this particular task, which led me to choose Producer / Consumer for the core word counting logic.
 
 ## <a id="CommandLineInterface"></a>Command Line Interface
 
@@ -51,7 +49,7 @@ All options have reasonable default values so none of them is mandatory. Using t
 Options:
 + `-p <path>` The file or directory to search, default is ".".
 + `-d <delimiters>` The set of delimiters to use, default is `" \t\n\r\f;,.:?!/\\'\"()[]{}<>+-*=~@#$%^&|"`.
-+ `-n <number>` The number of most or least used words to find, default is 10. Use 0 for all encountered words.
++ `-n <number>` The number of most or least used words to find, default is 10. 0 means all available words.
 + `-l [error|warning|info|debug]` The log level to use, default is "info". 
 + `-m [top|bottom]` The mode, "top" stands for finding the most used words, "bottom" stands for finding the least used words.
 
@@ -76,9 +74,9 @@ private ScheduledExecutorService createReaders(final File file, final BlockingQu
 The construct `new Reader(file, queue, this)::read` is a *method reference* of type `Runnable` which refers to the `read` method of the newly created `Reader` object.
 
 See:
-+ [WordCounter.java](blob/master/wordcounter/src/com/stoyanr/wordcounter/WordCounter.java)
-+ [Reader.java](blob/master/wordcounter/src/com/stoyanr/wordcounter/Reader.java)
-+ [Counter.java](blob/master/wordcounter/src/com/stoyanr/wordcounter/Counter.java)
++ [WordCounter.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCounter.java)
++ [Reader.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/Reader.java)
++ [Counter.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/Counter.java)
 
 ### The WordCountAnalyzer Class
 
@@ -145,7 +143,7 @@ protected T compute() {
 }
 ```
 See:
-+ [WordCountAnalyzer.java](blob/master/wordcounter/src/com/stoyanr/wordcounter/WordCountAnalyzer.java)
-+ [AnalysisOperation.java](blob/master/wordcounter/src/com/stoyanr/wordcounter/AnalysisOperation.java)
-+ [FindTopOperation.java](blob/master/wordcounter/src/com/stoyanr/wordcounter/FindTopOperation.java)
++ [WordCountAnalyzer.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCountAnalyzer.java)
++ [AnalysisOperation.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/AnalysisOperation.java)
++ [FindTopOperation.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/FindTopOperation.java)
 

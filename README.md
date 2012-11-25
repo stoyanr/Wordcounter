@@ -74,9 +74,9 @@ private ScheduledExecutorService createReaders(final File file, final BlockingQu
 The construct `new Reader(file, queue, this)::read` is a *method reference* of type `Runnable` which refers to the `read` method of the newly created `Reader` object.
 
 See:
-+ [WordCounter.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCounter.java)
-+ [Reader.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/Reader.java)
-+ [Counter.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/Counter.java)
++ [WordCounter.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCounter.java)
++ [Reader.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/Reader.java)
++ [Counter.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/Counter.java)
 
 ### The WordCountAnalyzer Class
 
@@ -143,7 +143,7 @@ protected T compute() {
 }
 ```
 See:
-+ [WordCountAnalyzer.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCountAnalyzer.java)
-+ [AnalysisOperation.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/AnalysisOperation.java)
-+ [FindTopOperation.java](blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/FindTopOperation.java)
++ [WordCountAnalyzer.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCountAnalyzer.java)
++ [AnalysisOperation.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/AnalysisOperation.java)
++ [FindTopOperation.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/FindTopOperation.java)
 

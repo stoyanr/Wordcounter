@@ -115,17 +115,7 @@ public class WordCountAnalyzerPerfTest {
 
     private void printSorted(SortedMap<Integer, Set<String>> sorted) {
         if (Logger.isDebug()) {
-            int i = 0;
-            for (Entry<Integer, Set<String>> e : sorted.entrySet()) {
-                int count = e.getKey();
-                Set<String> words = e.getValue();
-                for (String word : words) {
-                    System.out.printf("%12s: %d\n", word, count);
-                    if (++i == top) {
-                        return;
-                    }
-                }
-            }
+            Main.printSorted(sorted, top);
         }
     }
 

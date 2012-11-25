@@ -34,8 +34,8 @@ public class WordCounterPerfTest {
     public static Collection<Object[]> data() {
         // @formatter:off
         Object[][] data = new Object[][] { 
-            { 100, 100000 }, 
             { 1, 10000000 }, 
+            { 100, 100000 }, 
         };
         // @formatter:on
         return asList(data);
@@ -112,11 +112,7 @@ public class WordCounterPerfTest {
 
     private void printCounts(Map<String, Integer> counts) {
         if (Logger.isDebug()) {
-            for (Entry<String, Integer> e : counts.entrySet()) {
-                String word = e.getKey();
-                int count = e.getValue();
-                System.out.printf("%12s: %d\n", word, count);
-            }
+            Main.printCounts(counts);
         }
     }
 

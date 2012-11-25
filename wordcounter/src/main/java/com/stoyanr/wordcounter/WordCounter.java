@@ -37,24 +37,22 @@ import org.apache.commons.io.FileUtils;
 class WordCounter {
 
     public static final String DEFAULT_DELIMITERS = " \t\n\r\f;,.:?!/\\'\"()[]{}<>+-*=~@#$%^&|`";
-    public static final int DEFAULT_NUM_COUNTERS = Runtime.getRuntime().availableProcessors();
 
+    private static final int PAR = Runtime.getRuntime().availableProcessors();
     private static final int MAX_ST_SIZE = 1024 * 1024;
 
     private static final EnumSet<FileVisitOption> OPTIONS = EnumSet
         .of(FileVisitOption.FOLLOW_LINKS);
 
     private final String delimiters;
-    private final int numCounters;
     private final Set<Character> ds;
 
     public WordCounter() {
-        this(DEFAULT_DELIMITERS, DEFAULT_NUM_COUNTERS);
+        this(DEFAULT_DELIMITERS);
     }
 
-    public WordCounter(String delimiters, int numCounters) {
+    public WordCounter(String delimiters) {
         this.delimiters = delimiters;
-        this.numCounters = numCounters;
         ds = createDelimiterSet(delimiters);
     }
 
@@ -136,9 +134,9 @@ class WordCounter {
     }
 
     private Map<String, Integer> countWordsParallel(File file) {
-        ConcurrentMap<String, Integer> result = new ConcurrentHashMap<>(16, 0.75f, numCounters);
+        ConcurrentMap<String, Integer> result = new ConcurrentHashMap<>(16, 0.75f, PAR);
         try {
-            BlockingQueue<String> queue = new LinkedBlockingQueue<>(numCounters);
+            BlockingQueue<String> queue = new LinkedBlockingQueue<>(PAR);
             ScheduledExecutorService readers = createReaders(file, queue);
             ScheduledExecutorService counters = createCounters(queue, result);
             boolean finished = shutdownReaders(readers);
@@ -159,8 +157,8 @@ class WordCounter {
 
     private ScheduledExecutorService createCounters(BlockingQueue<String> queue,
         ConcurrentMap<String, Integer> counts) {
-        ScheduledExecutorService counters = new ScheduledThreadPoolExecutor(numCounters);
-        for (int i = 0; i < numCounters; i++) {
+        ScheduledExecutorService counters = new ScheduledThreadPoolExecutor(PAR);
+        for (int i = 0; i < PAR; i++) {
             counters.submit(new CounterRunnable(i, queue, counts));
         }
         return counters;
@@ -188,8 +186,7 @@ class WordCounter {
         private final ConcurrentMap<String, Integer> counts;
         private volatile String threadName;
 
-        CounterRunnable(int id, BlockingQueue<String> queue,
-            ConcurrentMap<String, Integer> counts) {
+        CounterRunnable(int id, BlockingQueue<String> queue, ConcurrentMap<String, Integer> counts) {
             this.id = id;
             this.queue = queue;
             this.counts = counts;

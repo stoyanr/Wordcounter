@@ -16,7 +16,7 @@ import java.util.concurrent.RecursiveTask;
 
 public class WordCountAnalyzer {
 
-    public static final int DEFAULT_PAR = Runtime.getRuntime().availableProcessors();
+    public static final int PAR = Runtime.getRuntime().availableProcessors();
     public static final int MIN_THRESHOLD = 32 * 1024;
 
     private final ForkJoinPool forkJoinPool = new ForkJoinPool();
@@ -27,7 +27,7 @@ public class WordCountAnalyzer {
 
     public SortedMap<Integer, Set<String>> analyze(Map<String, Integer> counts, int top,
         boolean parallel) {
-        if (top <= 0 || top > counts.size())
+        if (top < 0 || top > counts.size())
             throw new IllegalArgumentException();
         Set<Entry<String, Integer>> entries = counts.entrySet();
         if (parallel) {
@@ -79,7 +79,7 @@ public class WordCountAnalyzer {
             this.lo = lo;
             this.hi = hi;
             this.top = top;
-            this.threshold = Math.max(entries.size() / DEFAULT_PAR, MIN_THRESHOLD);
+            this.threshold = Math.max(entries.size() / PAR, MIN_THRESHOLD);
         }
 
         @Override

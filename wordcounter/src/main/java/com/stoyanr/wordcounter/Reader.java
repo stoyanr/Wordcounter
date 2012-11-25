@@ -17,6 +17,7 @@
  */
 package com.stoyanr.wordcounter;
 
+import com.stoyanr.util.FileUtils;
 import static com.stoyanr.util.Logger.debug;
 import static com.stoyanr.util.Logger.isDebug;
 

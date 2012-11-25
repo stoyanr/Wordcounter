@@ -17,6 +17,7 @@
  */
 package com.stoyanr.wordcounter;
 
+import com.stoyanr.util.FileUtils;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
@@ -37,7 +38,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-class WordCounter {
+public class WordCounter {
 
     public static final String DEFAULT_DELIMITERS = " \t\n\r\f;,.:?!/\\'\"()[]{}<>+-*=~@#$%^&|`";
 

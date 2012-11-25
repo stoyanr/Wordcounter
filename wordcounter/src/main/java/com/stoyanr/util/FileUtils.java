@@ -15,7 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.stoyanr.wordcounter;
+package com.stoyanr.util;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -28,11 +28,11 @@ import java.util.concurrent.Future;
 public class FileUtils {
     private static final int BUF_SIZE = 256 * 1024;
     
-    interface TextProcessor<T> {
+    public interface TextProcessor<T> {
         T process(String text, T state) throws InterruptedException;
     }
 
-    static String readFileToString(Path file) throws IOException {
+    public static String readFileToString(Path file) throws IOException {
         final StringBuilder sb = new StringBuilder();
         readFileAsync(file, (String text, Void x) -> {
             sb.append(text);
@@ -41,7 +41,7 @@ public class FileUtils {
         return sb.toString();
     }
 
-    static <T> void readFileAsync(Path file, TextProcessor<T> processor) throws IOException {
+    public static <T> void readFileAsync(Path file, TextProcessor<T> processor) throws IOException {
         try (AsynchronousFileChannel ac = AsynchronousFileChannel.open(file)) {
             ByteBuffer buffer = ByteBuffer.allocate(BUF_SIZE);
             T rem = null;
@@ -56,7 +56,7 @@ public class FileUtils {
         } catch (IOException e) {
             throw e;
         } catch (ExecutionException | InterruptedException e) {
-            throw new WordCounterException(String.format("Can't read file %s: %s", file.toString(), 
+            throw new RuntimeException(String.format("Can't read file %s: %s", file.toString(), 
                 e.getMessage()), e);
         }
     }

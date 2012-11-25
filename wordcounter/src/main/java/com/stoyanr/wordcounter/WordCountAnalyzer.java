@@ -31,8 +31,8 @@ import java.util.concurrent.RecursiveTask;
 
 public class WordCountAnalyzer {
 
-    public static final int PAR = Runtime.getRuntime().availableProcessors();
-    public static final int MIN_THRESHOLD = 32 * 1024;
+    private static final int PAR = Runtime.getRuntime().availableProcessors();
+    private static final int MIN_THRESHOLD = 32 * 1024;
 
     private final ForkJoinPool forkJoinPool = new ForkJoinPool();
 

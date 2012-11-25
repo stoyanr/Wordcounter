@@ -9,7 +9,7 @@ The library uses JDK 8 [lambdas](http://openjdk.java.net/projects/lambda/), as w
 With the introduction of lambdas and their supporting features in JDK 8, the way we build software in Java is going to change. If you would like to get an idea how your Java code may look like in a few years, you may take a look at Wordcounter. Unlike most resources available at the moment, this is not a tutorial, but a real working project.
 
 The latest binary, javadoc, and sources packages can be found in [downloads](https://github.com/downloads/stoyanr/Wordcounter/):
-+ [wordcounter-1.0.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0-javadoc.jar)
++ [wordcounter-1.0.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0.jar)
 + [wordcounter-1.0-javadoc.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0-javadoc.jar)
 + [wordcounter-1.0-sources.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0-sources.jar)
 

@@ -1,5 +1,3 @@
-[Introduction](#Introduction) | [Overview](#Overview) | [Command Line Interface](#CommandLineInterface) | [Design](#Design) | [References](#References)
-
 ## <a id="Introduction"></a>Introduction
 
 **Wordcounter** is a Java library and command-line utility for counting words in text files and directory trees and performing analysis on the word counts, such as finding the top X most used words in all files. It makes heavy use of parallel computing to use all available cores when performing the analysis.
@@ -23,7 +21,7 @@ This work is licensed under the [Apache License, Version 2.0](http://www.apache.
 + Analyze the word usages to find the top X most used or the bottom X least used words.
 + Choose between non-parallel and parallel implementations to compare their performance.
 
-## Programming Highlights
+### Programming Highlights
 
 + Uses [Producer / Consumer](http://en.wikipedia.org/wiki/Producer-consumer_problem) for counting the words in parallel threads while reading them. A single producer task reads all files to strings and puts them in a `BlockingQueue`. Multiple consumer threads take strings from the queue and count their words, accumulating the result in a `ConcurrentHashMap`.
 + Uses [Fork / Join](http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) for performing analysis on the word counts. With large maps, a `RecursiveTask` forks itself until reaching the desired concurrency level and then joins the results.

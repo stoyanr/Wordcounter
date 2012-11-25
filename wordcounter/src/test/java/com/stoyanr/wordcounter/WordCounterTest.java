@@ -1,4 +1,4 @@
-package com.stoyanr.wordfinder;
+package com.stoyanr.wordcounter;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -16,6 +16,8 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
+
+import com.stoyanr.wordcounter.WordCounter;
 
 @RunWith(Parameterized.class)
 public class WordCounterTest {

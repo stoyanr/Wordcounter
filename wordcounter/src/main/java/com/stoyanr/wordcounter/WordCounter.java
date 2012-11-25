@@ -1,4 +1,4 @@
-package com.stoyanr.wordfinder;
+package com.stoyanr.wordcounter;
 
 import static com.stoyanr.util.Logger.debug;
 import static com.stoyanr.util.Logger.isDebug;

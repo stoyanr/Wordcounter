@@ -1,4 +1,4 @@
-package com.stoyanr.wordfinder;
+package com.stoyanr.wordcounter;
 
 import static java.util.Arrays.asList;
 
@@ -19,6 +19,7 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.stoyanr.util.Logger;
+import com.stoyanr.wordcounter.WordCountAnalyzer;
 
 @RunWith(Parameterized.class)
 public class WordCountAnalyzerPerfTest {

@@ -17,17 +17,14 @@
  */
 package com.stoyanr.util;
 
-public class ArgumentsException extends RuntimeException
-{
+public class ArgumentsException extends RuntimeException {
     private static final long serialVersionUID = 1L;
-    
-    public ArgumentsException()
-    {
+
+    public ArgumentsException() {
         super();
     }
 
-    public ArgumentsException(final Exception exc)
-    {
+    public ArgumentsException(final Exception exc) {
         super(exc);
         assert (exc != null);
     }

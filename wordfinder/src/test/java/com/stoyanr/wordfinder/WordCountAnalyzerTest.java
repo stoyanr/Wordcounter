@@ -75,6 +75,11 @@ public class WordCountAnalyzerTest {
         assertEquals(TestUtils.getHead(sorted, top), analyzer.analyze(counts, top));
     }
 
+    @Test
+    public void testAnalyzeParallel() {
+        assertEquals(TestUtils.getHead(sorted, top), analyzer.analyze(counts, top, true));
+    }
+
     private static Set<String> asSet(String... strings) {
         return new HashSet<>(asList(strings));
     }

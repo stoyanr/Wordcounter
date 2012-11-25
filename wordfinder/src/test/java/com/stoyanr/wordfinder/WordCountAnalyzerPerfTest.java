@@ -18,6 +18,8 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
+import com.stoyanr.util.Logger;
+
 @RunWith(Parameterized.class)
 public class WordCountAnalyzerPerfTest {
     private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789_";
@@ -39,6 +41,8 @@ public class WordCountAnalyzerPerfTest {
     private final int top;
 
     private WordCountAnalyzer analyzer;
+    private Map<String, Integer> counts;
+    private SortedMap<Integer, Set<String>> sorted;
 
     public WordCountAnalyzerPerfTest(int numWords, int maxCount, int top) {
         this.numWords = numWords;
@@ -48,23 +52,29 @@ public class WordCountAnalyzerPerfTest {
 
     @Before
     public void setUp() {
+        Logger.level = Logger.Level.INFO;
         analyzer = new WordCountAnalyzer();
+        counts = createCounts();
+        sorted = getSorted(counts);
     }
 
     @Test
     public void test() throws Exception {
-        Map<String, Integer> counts = counts();
-        SortedMap<Integer, Set<String>> sorted = getSorted(counts);
-        System.out.printf("Processing %d words ...\n", counts.size());
+        testx(false);
+        testx(true);
+    }
+
+    private void testx(boolean parallel) throws Exception {
+        System.out.printf("Processing %d words (parallel: %b) ...\n", counts.size(), parallel);
         long time0 = System.currentTimeMillis();
-        SortedMap<Integer, Set<String>> sortedx = analyzer.analyze(counts, top);
+        SortedMap<Integer, Set<String>> sortedx = analyzer.analyze(counts, top, parallel);
         long time1 = System.currentTimeMillis();
         System.out.printf("Analyzed %d words in %d ms\n", counts.size(), (time1 - time0));
         printSorted(sortedx);
         TestUtils.assertEqualSortedMaps(sorted, sortedx);
     }
     
-    private Map<String, Integer> counts() {
+    private Map<String, Integer> createCounts() {
         Map<String, Integer> counts = new HashMap<>();
         for (int i = 0; i < numWords; i++) {
             counts.put(getRandomWord(), getRandomCount());
@@ -103,14 +113,16 @@ public class WordCountAnalyzerPerfTest {
     }
 
     private void printSorted(SortedMap<Integer, Set<String>> sorted) {
-        int i = 0;
-        for (Entry<Integer, Set<String>> e : sorted.entrySet()) {
-            int count = e.getKey();
-            Set<String> words = e.getValue();
-            for (String word : words) {
-                System.out.printf("%12s: %d\n", word, count);
-                if (++i == top) {
-                    return;
+        if (Logger.isDebug()) {
+            int i = 0;
+            for (Entry<Integer, Set<String>> e : sorted.entrySet()) {
+                int count = e.getKey();
+                Set<String> words = e.getValue();
+                for (String word : words) {
+                    System.out.printf("%12s: %d\n", word, count);
+                    if (++i == top) {
+                        return;
+                    }
                 }
             }
         }

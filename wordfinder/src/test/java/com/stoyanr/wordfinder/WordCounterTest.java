@@ -27,9 +27,6 @@ public class WordCounterTest {
     private static final Map<String, Integer> COUNTS2 = new HashMap<>();
     private static final Map<String, Integer> COUNTS3 = new HashMap<>();
 
-    private static final String DELIMS = WordCounter.DEFAULT_DELIMITERS
-        + ";,.:?!/\\'\"()[]{}<>+-*=~@#$%^&|`";
-
     private static final String DIR = "words";
     private static final String FILE = "words.txt";
 
@@ -66,29 +63,28 @@ public class WordCounterTest {
 
     @Before
     public void setUp() {
-        counter = new WordCounter(DELIMS, 4);
+        counter = new WordCounter();
     }
 
     @Test
     public void testCountWordsString() {
-        Map<String, Integer> result = counter.countWords(text());
-        assertEquals(combine(), result);
+        Map<String, Integer> result = counter.countWords(createText());
+        assertEquals(combineCounts(), result);
     }
 
     @Test
     public void testCountWordsFile() throws Exception {
-        Map<String, Integer> result = counter.countWords(file());
-        assertEquals(combine(), result);
+        Map<String, Integer> result = counter.countWords(createFile());
+        assertEquals(combineCounts(), result);
     }
 
     @Test
     public void testCountWordsTree() throws Exception {
-        Map<String, Integer> result = counter.countWords(tree());
-        Map<String, Integer> expected = combine();
-        TestUtils.assertEqualMaps(expected, result);
+        Map<String, Integer> result = counter.countWords(createTree());
+        TestUtils.assertEqualMaps(combineCounts(), result);
     }
 
-    private String text() {
+    private String createText() {
         StringBuilder sb = new StringBuilder();
         for (String text : texts) {
             sb.append(text + "\n");
@@ -96,13 +92,13 @@ public class WordCounterTest {
         return sb.toString();
     }
 
-    private File file() throws IOException {
+    private File createFile() throws IOException {
         File file = new File(FILE);
-        FileUtils.writeStringToFile(file, text());
+        FileUtils.writeStringToFile(file, createText());
         return file;
     }
 
-    private File tree() throws IOException {
+    private File createTree() throws IOException {
         File dir = new File(DIR);
         TestUtils.deleteDir(dir);
         dir.mkdirs();
@@ -116,10 +112,10 @@ public class WordCounterTest {
         return dir;
     }
 
-    private Map<String, Integer> combine() {
+    private Map<String, Integer> combineCounts() {
         Map<String, Integer> result = new HashMap<>();
         for (Map<String, Integer> counts : countsList) {
-            WordCounter.addCounts(result, counts);
+            WordCounter.add(result, counts);
         }
         return result;
     }

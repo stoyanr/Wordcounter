@@ -24,8 +24,7 @@ public class WordCounterPerfTest {
     private static final String[] VOCABULARY = { "one", "two", "three", "four", "five", "six",
         "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen" };
 
-    private static final String DELIMS = WordCounter.DEFAULT_DELIMITERS
-        + ";,.:?!/\\'\"()[]{}<>+-*=~@#$%^&|`";
+    private static final String DELIMS = WordCounter.DEFAULT_DELIMITERS;
 
     private static final String DIR = "words";
     private static final String FILE = "words.txt";
@@ -35,6 +34,7 @@ public class WordCounterPerfTest {
         // @formatter:off
         Object[][] data = new Object[][] { 
             { 100, 100000 }, 
+            { 1, 10000000 }, 
         };
         // @formatter:on
         return asList(data);
@@ -44,6 +44,8 @@ public class WordCounterPerfTest {
     private final int maxWords;
 
     private WordCounter counter;
+    private Map<String, Integer> counts;
+    private File tree;
 
     public WordCounterPerfTest(int numFiles, int maxWords) {
         this.numFiles = numFiles;
@@ -51,39 +53,44 @@ public class WordCounterPerfTest {
     }
 
     @Before
-    public void setUp() {
+    public void setUp() throws Exception {
         Logger.level = Logger.Level.INFO;
-        counter = new WordCounter(DELIMS, 4);
+        counter = new WordCounter();
+        counts = new HashMap<>();
+        tree = createTree(counts);
     }
 
     @Test
     public void test() throws Exception {
-        Map<String, Integer> counts = new HashMap<>();
-        File tree = tree(counts);
-        System.out.printf("Processing %d files ...\n", numFiles);
+        testx(false);
+        testx(true);
+    }
+
+    private void testx(boolean parallel) throws Exception {
+        System.out.printf("Processing %d files (parallel: %b) ...\n", numFiles, parallel);
         long time0 = System.currentTimeMillis();
-        Map<String, Integer> countsx = counter.countWords(tree);
+        Map<String, Integer> countsx = counter.countWords(tree, parallel);
         long time1 = System.currentTimeMillis();
         System.out.printf("Processed %d files in %d ms\n", numFiles, (time1 - time0));
         printCounts(countsx);
         TestUtils.assertEqualMaps(counts, countsx);
     }
 
-    private File tree(Map<String, Integer> counts) throws IOException {
+    private File createTree(Map<String, Integer> counts) throws IOException {
         File dir = new File(DIR);
         TestUtils.deleteDir(dir);
         dir.mkdirs();
         for (int i = 0; i < numFiles; i++) {
             File dirx = new File(DIR + "/" + i);
             dirx.mkdirs();
-            FileUtils.writeStringToFile(new File(DIR + "/" + i + "/" + FILE), text(counts));
+            FileUtils.writeStringToFile(new File(DIR + "/" + i + "/" + FILE), createText(counts));
         }
         return dir;
     }
 
-    private String text(Map<String, Integer> counts) {
-        int numWords = (int) (Math.random() * maxWords);
-        StringBuilder sb = new StringBuilder();
+    private String createText(Map<String, Integer> counts) {
+        int numWords = maxWords;
+        StringBuilder sb = new StringBuilder(numWords * 10);
         for (int i = 0; i < numWords; i++) {
             int index = (int) (Math.random() * VOCABULARY.length);
             String word = VOCABULARY[index];
@@ -101,12 +108,14 @@ public class WordCounterPerfTest {
             sb.append(DELIMS.charAt(index));
         }
     }
-    
+
     private void printCounts(Map<String, Integer> counts) {
-        for (Entry<String, Integer> e : counts.entrySet()) {
-            String word = e.getKey();
-            int count = e.getValue();
-            System.out.printf("%12s: %d\n", word, count);
+        if (Logger.isDebug()) {
+            for (Entry<String, Integer> e : counts.entrySet()) {
+                String word = e.getKey();
+                int count = e.getValue();
+                System.out.printf("%12s: %d\n", word, count);
+            }
         }
     }
 

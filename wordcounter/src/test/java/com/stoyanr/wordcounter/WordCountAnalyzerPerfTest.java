@@ -18,16 +18,11 @@
 package com.stoyanr.wordcounter;
 
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -36,19 +31,21 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.stoyanr.util.Logger;
-import com.stoyanr.wordcounter.WordCountAnalyzer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(Parameterized.class)
 public class WordCountAnalyzerPerfTest {
-    private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz0123456789_";
     
+    private static final Comparator<Integer> COMP = (x, y) -> (y - x);
+    private static final String ALPHABET = "abcdefghijklmnopqrstuvwxyz";
     private static final int MAX_LENGTH = 12;
 
     @Parameters
     public static Collection<Object[]> data() {
         // @formatter:off
         Object[][] data = new Object[][] { 
-            { 2000000, 1000000000, 10 }, 
+            { 2000000, 1000000000, 10, false }, 
+            { 2000000, 1000000000, 10, true }, 
         };
         // @formatter:on
         return asList(data);
@@ -57,47 +54,44 @@ public class WordCountAnalyzerPerfTest {
     private final int numWords;
     private final int maxCount;
     private final int number;
+    private final boolean par;
 
     private WordCountAnalyzer analyzer;
-    private Map<String, Integer> counts;
-    private SortedMap<Integer, Set<String>> sorted;
+    private WordCounts wc;
+    private TopWordCounts twc;
 
-    public WordCountAnalyzerPerfTest(int numWords, int maxCount, int number) {
+    public WordCountAnalyzerPerfTest(int numWords, int maxCount, int number, boolean par) {
         this.numWords = numWords;
         this.maxCount = maxCount;
         this.number = number;
+        this.par = par;
     }
 
     @Before
     public void setUp() {
         Logger.level = Logger.Level.INFO;
-        analyzer = new WordCountAnalyzer();
-        counts = createCounts();
-        sorted = getSorted(counts);
+        wc = createWordCounts();
+        twc = getTopWordCounts(wc);
+        analyzer = new WordCountAnalyzer(wc, par);
     }
 
     @Test
     public void test() throws Exception {
-        testx(false);
-        testx(true);
+        System.out.printf("Processing %d words (parallel: %b) ...\n", wc.getSize(), par);
+        long time0 = System.currentTimeMillis();
+        TopWordCounts twcx = analyzer.findTop(number, COMP);
+        long time1 = System.currentTimeMillis();
+        System.out.printf("Analyzed %d words in %d ms\n", wc.getSize(), (time1 - time0));
+        printSorted(twcx);
+        assertEquals(twc, twcx);
     }
 
-    private void testx(boolean parallel) throws Exception {
-        System.out.printf("Processing %d words (parallel: %b) ...\n", counts.size(), parallel);
-        long time0 = System.currentTimeMillis();
-        SortedMap<Integer, Set<String>> sortedx = analyzer.findTop(counts, number, true, parallel);
-        long time1 = System.currentTimeMillis();
-        System.out.printf("Analyzed %d words in %d ms\n", counts.size(), (time1 - time0));
-        printSorted(sortedx);
-        TestUtils.assertEqualSortedMaps(sorted, sortedx);
-    }
-    
-    private Map<String, Integer> createCounts() {
-        Map<String, Integer> counts = new HashMap<>();
+    private WordCounts createWordCounts() {
+        WordCounts wc = new WordCounts();
         for (int i = 0; i < numWords; i++) {
-            counts.put(getRandomWord(), getRandomCount());
+            wc.set(getRandomWord(), getRandomCount());
         }
-        return counts;
+        return wc;
     }
 
     private String getRandomWord() {
@@ -114,29 +108,17 @@ public class WordCountAnalyzerPerfTest {
         return (int) (Math.random() * maxCount);
     }
 
-    private SortedMap<Integer, Set<String>> getSorted(Map<String, Integer> counts) {
-        SortedMap<Integer, Set<String>> sorted = new TreeMap<>(comparator());
-        for (Entry<String, Integer> e : counts.entrySet()) {
-            String word = e.getKey();
-            int count = e.getValue();
-            if (sorted.containsKey(count)) {
-                sorted.get(count).add(word);
-            } else {
-                Set<String> set = new HashSet<>();
-                set.add(word);
-                sorted.put(count, set);
-            }
+    private TopWordCounts getTopWordCounts(WordCounts wc) {
+        TopWordCounts twc = new TopWordCounts(number, COMP);
+        for (Entry<String, AtomicInteger> e : wc.getEntries()) {
+            twc.add(e.getValue().get(), e.getKey());
         }
-        return TestUtils.getHead(sorted, number);
+        return twc;
     }
 
-    private void printSorted(SortedMap<Integer, Set<String>> sorted) {
+    private void printSorted(TopWordCounts sorted) {
         if (Logger.isDebug()) {
-            Main.printSorted(sorted, number, true);
+            sorted.print(System.out);
         }
-    }
-
-    private static Comparator<Integer> comparator() {
-        return (x, y) -> (y - x);
     }
 }

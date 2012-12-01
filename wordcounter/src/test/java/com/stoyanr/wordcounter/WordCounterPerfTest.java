@@ -18,12 +18,11 @@
 package com.stoyanr.wordcounter;
 
 import static java.util.Arrays.asList;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
@@ -33,6 +32,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.stoyanr.util.Logger;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @RunWith(Parameterized.class)
 public class WordCounterPerfTest {
@@ -40,7 +41,7 @@ public class WordCounterPerfTest {
     private static final String[] VOCABULARY = { "one", "two", "three", "four", "five", "six",
         "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen" };
 
-    private static final String DELIMS = WordCounter.DEFAULT_DELIMITERS;
+    private static final String DELIMS = " \t\n\r\f;,.:?!/\\'\"()[]{}<>+-*=~@#$%^&|`";
 
     private static final String DIR = "words";
     private static final String FILE = "words.txt";
@@ -49,8 +50,10 @@ public class WordCounterPerfTest {
     public static Collection<Object[]> data() {
         // @formatter:off
         Object[][] data = new Object[][] { 
-            { 1, 10000000 }, 
-            { 100, 100000 }, 
+            { 1, 10000000, false }, 
+            { 1, 10000000, true }, 
+            { 100, 100000, false }, 
+            { 100, 100000, true }, 
         };
         // @formatter:on
         return asList(data);
@@ -58,53 +61,50 @@ public class WordCounterPerfTest {
 
     private final int numFiles;
     private final int maxWords;
+    private final boolean par;
 
     private WordCounter counter;
-    private Map<String, Integer> counts;
-    private File tree;
+    private WordCounts wc;
+    private Path tree;
 
-    public WordCounterPerfTest(int numFiles, int maxWords) {
+    public WordCounterPerfTest(int numFiles, int maxWords, boolean par) {
         this.numFiles = numFiles;
         this.maxWords = maxWords;
+        this.par = par;
     }
 
     @Before
     public void setUp() throws Exception {
         Logger.level = Logger.Level.INFO;
-        counter = new WordCounter();
-        counts = new HashMap<>();
-        tree = createTree(counts);
+        wc = new WordCounts();
+        tree = createTree(wc);
+        counter = new WordCounter(tree, Character::isAlphabetic, par);
     }
 
     @Test
     public void test() throws Exception {
-        testx(false);
-        testx(true);
-    }
-
-    private void testx(boolean parallel) throws Exception {
-        System.out.printf("Processing %d files (parallel: %b) ...\n", numFiles, parallel);
+        System.out.printf("Processing %d files (parallel: %b) ...\n", numFiles, par);
         long time0 = System.currentTimeMillis();
-        Map<String, Integer> countsx = counter.countWords(tree, parallel);
+        WordCounts wcx = counter.count();
         long time1 = System.currentTimeMillis();
         System.out.printf("Processed %d files in %d ms\n", numFiles, (time1 - time0));
-        printCounts(countsx);
-        TestUtils.assertEqualMaps(counts, countsx);
+        printCounts(wcx);
+        assertEquals(wc, wcx);
     }
 
-    private File createTree(Map<String, Integer> counts) throws IOException {
+    private Path createTree(WordCounts wc) throws IOException {
         File dir = new File(DIR);
-        TestUtils.deleteDir(dir);
+        WordCounterTest.deleteDir(dir);
         dir.mkdirs();
         for (int i = 0; i < numFiles; i++) {
             File dirx = new File(DIR + "/" + i);
             dirx.mkdirs();
-            FileUtils.writeStringToFile(new File(DIR + "/" + i + "/" + FILE), createText(counts));
+            FileUtils.writeStringToFile(new File(DIR + "/" + i + "/" + FILE), createText(wc));
         }
-        return dir;
+        return Paths.get(dir.getPath());
     }
 
-    private String createText(Map<String, Integer> counts) {
+    private String createText(WordCounts wc) {
         int numWords = maxWords;
         StringBuilder sb = new StringBuilder(numWords * 10);
         for (int i = 0; i < numWords; i++) {
@@ -114,7 +114,7 @@ public class WordCounterPerfTest {
             if (i < numWords - 1) {
                 appendDelimiters(sb);
             }
-            counts.put(word, (counts.containsKey(word)) ? counts.get(word) + 1 : 1);
+            wc.add(word, 1);
         }
         return sb.toString();
     }
@@ -127,9 +127,9 @@ public class WordCounterPerfTest {
         }
     }
 
-    private void printCounts(Map<String, Integer> counts) {
+    private void printCounts(WordCounts counts) {
         if (Logger.isDebug()) {
-            Main.printCounts(counts);
+            counts.print(System.out);
         }
     }
 

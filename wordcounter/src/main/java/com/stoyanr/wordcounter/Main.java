@@ -17,25 +17,26 @@
  */
 package com.stoyanr.wordcounter;
 
-import java.io.File;
 import java.util.Arrays;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.SortedMap;
 
 import com.stoyanr.util.Arguments;
 import com.stoyanr.util.ArgumentsException;
+import com.stoyanr.util.CharPredicate;
 import com.stoyanr.util.Logger;
+import java.nio.file.Paths;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.Set;
 
 public class Main {
     private static final String ARG_PATH = "p";
-    private static final String ARG_DELIMS = "d";
+    private static final String ARG_CHARS = "c";
     private static final String ARG_NUMBER = "n";
+    private static final String ARG_SER = "s";
     private static final String ARG_MODE = "m";
     private static final String ARG_LEVEL = "l";
-    private static final String ARGS_SCHEMA = ARG_PATH + "*," + ARG_DELIMS + "*," + ARG_NUMBER
-        + "#," + ARG_MODE + "*," + ARG_LEVEL + "*";
+    private static final String ARGS_SCHEMA = ARG_PATH + "*," + ARG_CHARS + "*," + ARG_NUMBER
+        + "#," + ARG_SER + "!," + ARG_MODE + "*," + ARG_LEVEL + "*";
 
     private static final String MODE_TOP = "top";
     private static final String MODE_BOTTOM = "bottom";
@@ -46,16 +47,18 @@ public class Main {
     private static final String LEVEL_DEBUG = "debug";
 
     private static final String DEFAULT_PATH = ".";
-    private static final String DEFAULT_DELIMS = WordCounter.DEFAULT_DELIMITERS;
+    private static final String DEFAULT_CHARS = "";
     private static final int DEFAULT_NUMBER = 10;
+    private static final boolean DEFAULT_SER = false;
     private static final String DEFAULT_MODE = MODE_TOP;
     private static final String DEFAULT_LEVEL = LEVEL_INFO;
 
     private final String[] args;
 
     private String path;
-    private String delims;
+    private Set<Character> chars;
     private int number;
+    private boolean ser;
     private String mode;
     private String level;
 
@@ -69,39 +72,46 @@ public class Main {
         try {
             final Arguments arguments = new Arguments(ARGS_SCHEMA, args);
             path = arguments.getString(ARG_PATH, DEFAULT_PATH);
-            delims = arguments.getString(ARG_DELIMS, DEFAULT_DELIMS);
+            chars = createChars(arguments.getString(ARG_CHARS, DEFAULT_CHARS));
             number = arguments.getInt(ARG_NUMBER, DEFAULT_NUMBER);
+            ser = arguments.getBoolean(ARG_SER, DEFAULT_SER);
             mode = arguments.getString(ARG_MODE, DEFAULT_MODE);
             level = arguments.getString(ARG_LEVEL, DEFAULT_LEVEL);
         } catch (ArgumentsException e) {
             reportError(e);
         }
     }
+    
+    private static Set<Character> createChars(String s) {
+        Set<Character> result = new HashSet<>();
+        for (int i = 0; i < s.length(); i++) {
+            result.add(s.charAt(i));
+        }
+        return result;
+    }
 
     /**
      * Runs the program.
      */
-    public final void run() {
+    final void run() {
         try {
             setLogLevel();
-            WordCounter counter = new WordCounter(delims);
-            Map<String, Integer> counts = counter.countWords(new File(path), true);
+            WordCounter counter = new WordCounter(Paths.get(path), getPredicate(), !ser);
+            WordCounts wc = counter.count();
             if (Logger.isDebug()) {
-                printCounts(counts);
+                wc.print(System.out);
             }
-            WordCountAnalyzer analyzer = new WordCountAnalyzer();
+            WordCountAnalyzer analyzer = new WordCountAnalyzer(wc, !ser);
             if (mode.equals(MODE_TOP) || mode.equals(MODE_BOTTOM)) {
-                int numberx = Math.min(counts.size(), number);
-                boolean top = mode.equals(MODE_TOP);
-                SortedMap<Integer, Set<String>> sorted = analyzer.findTop(counts, numberx, top,
-                    true);
-                printSorted(sorted, number, top);
+                int numberx = Math.min(wc.getSize(), number);
+                TopWordCounts twc = analyzer.findTop(numberx, getComparator());
+                twc.print(System.out);
             }
         } catch (final Exception e) {
             reportError(e);
         }
     }
-
+    
     private void setLogLevel() {
         switch (level) {
         case LEVEL_ERROR:
@@ -119,30 +129,15 @@ public class Main {
         }
     }
 
-    static void printCounts(Map<String, Integer> counts) {
-        Logger.debug("Printing raw word counts");
-        for (Entry<String, Integer> e : counts.entrySet()) {
-            String word = e.getKey();
-            int count = e.getValue();
-            System.out.printf("%20s: %d\n", word, count);
-        }
+    private Comparator<Integer> getComparator() {
+        return mode.equals(MODE_TOP) ? (x, y) -> (y - x) : (x, y) -> (x - y);
     }
-
-    static void printSorted(SortedMap<Integer, Set<String>> sorted, int number, boolean top) {
-        Logger.debug("Printing %s %d words", (top) ? "top" : "bottom", number);
-        int i = 0;
-        for (Entry<Integer, Set<String>> e : sorted.entrySet()) {
-            int count = e.getKey();
-            Set<String> words = e.getValue();
-            for (String word : words) {
-                System.out.printf("%20s: %d\n", word, count);
-                if (++i == number) {
-                    return;
-                }
-            }
-        }
+    
+    private CharPredicate getPredicate() {
+        return chars.isEmpty() ? (c) -> Character.isAlphabetic(c) : 
+            (c) -> Character.isAlphabetic(c) || chars.contains(c);
     }
-
+    
     private static void reportError(final Exception e) {
         System.out.printf("%s: %s\n", e.getClass().getSimpleName(), e.getMessage());
         if (Logger.isDebug()) {

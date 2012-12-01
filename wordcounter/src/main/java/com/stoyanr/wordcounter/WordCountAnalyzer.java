@@ -17,98 +17,84 @@
  */
 package com.stoyanr.wordcounter;
 
-import static com.stoyanr.util.Logger.debug;
-import static com.stoyanr.util.Logger.isDebug;
-import com.stoyanr.wordcounter.AnalysisOperation.Analyzer;
-import com.stoyanr.wordcounter.AnalysisOperation.Merger;
-
+import com.stoyanr.util.ForkJoinComputer;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Set;
-import java.util.SortedMap;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.RecursiveTask;
+
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class WordCountAnalyzer {
 
-    private static final int PAR = Runtime.getRuntime().availableProcessors();
-    private static final int MIN_THRESHOLD = 32 * 1024;
-
-    private final ForkJoinPool forkJoinPool = new ForkJoinPool();
-
-    public SortedMap<Integer, Set<String>> findTop(Map<String, Integer> counts, int number,
-        boolean top) {
-        return findTop(counts, number, top, false);
+    private static final int THRESHOLD = 32 * 1024;
+    
+    private final WordCounts wc;
+    private final boolean par;
+    
+    public WordCountAnalyzer(WordCounts wc, boolean par) {
+        if (wc == null) {
+            throw new IllegalArgumentException("Word counts is null.");
+        }
+        this.wc = wc;
+        this.par = par;
     }
 
-    public SortedMap<Integer, Set<String>> findTop(Map<String, Integer> counts, final int number,
-        final boolean top, boolean parallel) {
-        Set<Entry<String, Integer>> entries = counts.entrySet();
-        AnalysisOperation<SortedMap<Integer, Set<String>>> op = new FindTopOperation(entries,
-            number, top);
-        return execute(op, entries.size(), parallel);
+    public TopWordCounts findTop(int number, Comparator<Integer> comparator) {
+        return analyse(new FindTopAnalysis(number, comparator));
     }
-
-    private <T> T execute(AnalysisOperation<T> op, int size, boolean parallel) {
-        if (parallel) {
-            return forkJoinPool.invoke(new AnalyzerTask<>(0, size, size, op.getAnalyzer(),
-                op.getMerger()));
+    
+    private <T> T analyse(Analysis<T> a) {
+        if (par) {
+            return new ForkJoinComputer<T>(wc.getSize(), THRESHOLD, a::compute, a::merge).compute();
         } else {
-            return op.getAnalyzer().analyze(0, size);
+            return a.compute(0, wc.getSize());
         }
     }
+    
+    interface Analysis<T> {
+        T compute(int lo, int hi);
+        
+        T merge(T r1, T r2);
+    }
+    
+    final class FindTopAnalysis implements Analysis<TopWordCounts> {
 
-    @SuppressWarnings("serial")
-    private final class AnalyzerTask<T> extends RecursiveTask<T> {
+        private final int number;
+        private final Comparator<Integer> comparator;
 
-        private final int lo;
-        private final int hi;
-        private final int size;
-        private final Analyzer<T> analyzer;
-        private final Merger<T> merger;
-
-        AnalyzerTask(int lo, int hi, int size, Analyzer<T> analyzer, Merger<T> merger) {
-            this.lo = lo;
-            this.hi = hi;
-            this.size = size;
-            this.analyzer = analyzer;
-            this.merger = merger;
+        FindTopAnalysis(int number, Comparator<Integer> comparator) {
+            if (number < 0 || number > wc.getSize()) {
+                throw new IllegalArgumentException("Number is negative or too big.");
+            }
+            if (comparator == null) {
+                throw new IllegalArgumentException("Comparator is null.");
+            }
+            this.number = (number != 0) ? number : wc.getSize();
+            this.comparator = comparator;
         }
 
         @Override
-        protected T compute() {
-            logStarting();
-            T result;
-            if (hi - lo <= Math.max(size / PAR, MIN_THRESHOLD)) {
-                result = analyzer.analyze(lo, hi);
-            } else {
-                int mid = (lo + hi) >>> 1;
-                AnalyzerTask<T> t1 = new AnalyzerTask<>(lo, mid, size, analyzer, merger);
-                t1.fork();
-                AnalyzerTask<T> t2 = new AnalyzerTask<>(mid, hi, size, analyzer, merger);
-                T result2 = t2.compute();
-                T result1 = t1.join();
-                result = merger.merge(result1, result2);
+        public TopWordCounts compute(int lo, int hi) {
+            TopWordCounts result = new TopWordCounts(number, comparator);
+            Iterator<Map.Entry<String, AtomicInteger>> it = wc.getEntries().iterator();
+            advance(it, lo);
+            for (int i = lo; i < hi; i++) {
+                Map.Entry<String, AtomicInteger> e = it.next();
+                result.addIfNeeded(e.getValue().get(), e.getKey());
             }
-            logFinished();
             return result;
         }
-
-        private void logStarting() {
-            if (isDebug()) {
-                debug("[Analyzer %d - %d (%s)] Starting ...", lo, hi, getThreadName());
-            }
-        }
-
-        private void logFinished() {
-            if (isDebug()) {
-                debug("[Analyzer %d - %d (%s)] Finished", lo, hi, getThreadName());
-            }
+        
+        @Override
+        public TopWordCounts merge(TopWordCounts r1, TopWordCounts r2) {
+            r1.add(r2);
+            return r1;
         }
     }
-
-    private static String getThreadName() {
-        return Thread.currentThread().getName();
+    
+    private <T> void advance(Iterator<T> it, int lo) {
+        for (int i = 0; i < lo; i++) {
+            it.next();
+        }
     }
-
 }

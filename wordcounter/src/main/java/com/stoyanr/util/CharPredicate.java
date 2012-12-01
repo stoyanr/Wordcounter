@@ -15,18 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.stoyanr.wordcounter;
+package com.stoyanr.util;
 
-interface AnalysisOperation<T> {
-    interface Analyzer<T> {
-        T analyze(int lo, int hi);
-    }
-    
-    interface Merger<T> {
-        T merge(T result1, T result2);
-    }    
-    
-    Analyzer<T> getAnalyzer();
-
-    Merger<T> getMerger();
+public interface CharPredicate {
+    boolean test(char c);
 }

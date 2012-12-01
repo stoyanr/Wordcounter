@@ -22,12 +22,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -37,23 +33,26 @@ import org.junit.runners.Parameterized.Parameters;
 
 @RunWith(Parameterized.class)
 public class WordCountAnalyzerTest {
+    
+    private static final Comparator<Integer> COMP = (x, y) -> (y - x);
 
-    private static final Map<String, Integer> COUNTS1 = new HashMap<>();
-    private static final Map<String, Integer> COUNTS2 = new HashMap<>();
-    private static final Map<String, Integer> COUNTS3 = new HashMap<>();
-    private static final SortedMap<Integer, Set<String>> SORTED1 = new TreeMap<>(comparator());
-    private static final SortedMap<Integer, Set<String>> SORTED2 = new TreeMap<>(comparator());
-    private static final SortedMap<Integer, Set<String>> SORTED3 = new TreeMap<>(comparator());
+    private static final WordCounts COUNTS1 = new WordCounts();
+    private static final WordCounts COUNTS2 = new WordCounts();
+    private static final WordCounts COUNTS3 = new WordCounts();
+    
+    private static final TopWordCounts TWC1 = new TopWordCounts(2, COMP);
+    private static final TopWordCounts TWC2 = new TopWordCounts(1, COMP);
+    private static final TopWordCounts TWC3 = new TopWordCounts(2, COMP);
 
     static {
         // @formatter:off
-        COUNTS1.put("one", 3); COUNTS1.put("two", 2); COUNTS1.put("three", 1);
-        COUNTS2.put("five", 2); COUNTS2.put("six", 1); COUNTS2.put("seven123", 1);
-        COUNTS3.put("eight", 2); COUNTS3.put("nine", 1); COUNTS3.put("ten10", 1); COUNTS3.put("eleven", 1);
+        COUNTS1.add("one", 3); COUNTS1.add("two", 2); COUNTS1.add("three", 1);
+        COUNTS2.add("five", 2); COUNTS2.add("six", 1); COUNTS2.add("seven", 1);
+        COUNTS3.add("eight", 2); COUNTS3.add("nine", 1); COUNTS3.add("ten", 1); COUNTS3.add("eleven", 1);
         
-        SORTED1.put(3, asSet("one")); SORTED1.put(2, asSet("two")); SORTED1.put(1, asSet("three")); 
-        SORTED2.put(2, asSet("five")); SORTED2.put(1, asSet("six", "seven123")); 
-        SORTED3.put(2, asSet("eight")); SORTED3.put(1, asSet("nine", "ten10", "eleven")); 
+        TWC1.add(3, asSet("one")); TWC1.add(2, asSet("two")); TWC1.add(1, asSet("three")); 
+        TWC2.add(2, asSet("five")); TWC2.add(1, asSet("six", "seven")); 
+        TWC3.add(2, asSet("eight")); TWC3.add(1, asSet("nine", "ten", "eleven")); 
         // @formatter:on
     }
 
@@ -61,48 +60,43 @@ public class WordCountAnalyzerTest {
     public static Collection<Object[]> data() {
         // @formatter:off
         Object[][] data = new Object[][] { 
-            { COUNTS1, SORTED1, 2 }, 
-            { COUNTS2, SORTED2, 1 }, 
-            { COUNTS3, SORTED3, 2 }, 
+            { COUNTS1, TWC1, 2 }, 
+            { COUNTS2, TWC2, 1 }, 
+            { COUNTS3, TWC3, 2 }, 
         };
         // @formatter:on
         return asList(data);
     }
 
-    private final Map<String, Integer> counts;
-    private final SortedMap<Integer, Set<String>> sorted;
+    private final WordCounts wc;
+    private final TopWordCounts twc;
     private final int number;
 
-    private WordCountAnalyzer analyzer;
+    private WordCountAnalyzer a1, a2;
 
-    public WordCountAnalyzerTest(Map<String, Integer> counts,
-        SortedMap<Integer, Set<String>> sorted, int number) {
-        this.counts = counts;
-        this.sorted = sorted;
+    public WordCountAnalyzerTest(WordCounts wc, TopWordCounts twc, int number) {
+        this.wc = wc;
+        this.twc = twc;
         this.number = number;
     }
 
     @Before
     public void setUp() throws Exception {
-        analyzer = new WordCountAnalyzer();
+        a1 = new WordCountAnalyzer(wc, false);
+        a2 = new WordCountAnalyzer(wc, true);
     }
 
     @Test
     public void testAnalyze() {
-        assertEquals(TestUtils.getHead(sorted, number), analyzer.findTop(counts, number, true));
+        assertEquals(twc, a1.findTop(number, COMP));
     }
 
     @Test
     public void testAnalyzeParallel() {
-        assertEquals(TestUtils.getHead(sorted, number), analyzer.findTop(counts, number, true, true));
+        assertEquals(twc, a2.findTop(number, COMP));
     }
 
     private static Set<String> asSet(String... strings) {
         return new HashSet<>(asList(strings));
     }
-
-    private static Comparator<Integer> comparator() {
-        return (x, y) -> (y - x);
-    }
-
 }

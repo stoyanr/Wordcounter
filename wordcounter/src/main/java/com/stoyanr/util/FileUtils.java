@@ -46,12 +46,22 @@ public class FileUtils {
             ByteBuffer buffer = ByteBuffer.allocate(BUF_SIZE);
             T rem = null;
             int pos = 0, read;
+            String text = "";
             do {
-                read = readBuffer(buffer, ac, pos);
+                buffer.rewind();
+                Future<Integer> future = ac.read(buffer, pos);
+                if (!text.isEmpty()) {
+                    rem = processor.process(text, rem);
+                }
+                while (!future.isDone()) {
+                    Thread.yield();
+                }
+                buffer.flip();
+                read = future.get();
                 pos += read;
-                String text = Charset.defaultCharset().decode(buffer).toString();
-                rem = processor.process(text, rem);
+                text = Charset.defaultCharset().decode(buffer).toString();
             } while (read == buffer.capacity());
+            rem = processor.process(text, rem);
             processor.process("", rem);
         } catch (IOException e) {
             throw e;
@@ -60,16 +70,4 @@ public class FileUtils {
                 e.getMessage()), e);
         }
     }
-
-    private static int readBuffer(ByteBuffer buffer, AsynchronousFileChannel ac, int pos)
-        throws InterruptedException, ExecutionException {
-        buffer.rewind();
-        Future<Integer> future = ac.read(buffer, pos);
-        while (!future.isDone()) {
-            Thread.yield();
-        }
-        buffer.flip();
-        return future.get();
-    }
-
 }

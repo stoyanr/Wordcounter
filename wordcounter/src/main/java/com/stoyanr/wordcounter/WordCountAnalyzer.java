@@ -30,13 +30,19 @@ public class WordCountAnalyzer {
     
     private final WordCounts wc;
     private final boolean par;
+    private final int parLevel;
     
     public WordCountAnalyzer(WordCounts wc, boolean par) {
+        this(wc, par, ForkJoinComputer.DEFAULT_PAR_LEVEL);
+    }
+    
+    public WordCountAnalyzer(WordCounts wc, boolean par, int parLevel) {
         if (wc == null) {
             throw new IllegalArgumentException("Word counts is null.");
         }
         this.wc = wc;
         this.par = par;
+        this.parLevel = parLevel;
     }
 
     public TopWordCounts findTop(int number, Comparator<Integer> comparator) {
@@ -45,7 +51,7 @@ public class WordCountAnalyzer {
     
     private <T> T analyse(Analysis<T> a) {
         if (par) {
-            return new ForkJoinComputer<T>(wc.getSize(), THRESHOLD, a::compute, a::merge).compute();
+            return new ForkJoinComputer<T>(wc.getSize(), THRESHOLD, a::compute, a::merge, parLevel).compute();
         } else {
             return a.compute(0, wc.getSize());
         }

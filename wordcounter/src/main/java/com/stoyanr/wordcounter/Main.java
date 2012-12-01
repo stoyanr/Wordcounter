@@ -34,15 +34,16 @@ public class Main {
     private static final String ARG_NUMBER = "n";
     private static final String ARG_SER = "s";
     private static final String ARG_MODE = "m";
-    private static final String ARG_LEVEL = "l";
+    private static final String ARG_PAR_LEVEL = "r";
+    private static final String ARG_LOG_LEVEL = "l";
     private static final String ARGS_SCHEMA = ARG_PATH + "*," + ARG_CHARS + "*," + ARG_NUMBER
-        + "#," + ARG_SER + "!," + ARG_MODE + "*," + ARG_LEVEL + "*";
+        + "#," + ARG_SER + "!," + ARG_MODE + "*," + ARG_PAR_LEVEL + "#," + ARG_LOG_LEVEL + "*";
 
     private static final String MODE_TOP = "top";
     private static final String MODE_BOTTOM = "bottom";
 
     private static final String LEVEL_ERROR = "error";
-    private static final String LEVEL_WARNING = "warining";
+    private static final String LEVEL_WARNING = "warning";
     private static final String LEVEL_INFO = "info";
     private static final String LEVEL_DEBUG = "debug";
 
@@ -51,7 +52,8 @@ public class Main {
     private static final int DEFAULT_NUMBER = 10;
     private static final boolean DEFAULT_SER = false;
     private static final String DEFAULT_MODE = MODE_TOP;
-    private static final String DEFAULT_LEVEL = LEVEL_INFO;
+    private static final int DEFAULT_PAR_LEVEL = Runtime.getRuntime().availableProcessors();
+    private static final String DEFAULT_LOG_LEVEL = LEVEL_ERROR;
 
     private final String[] args;
 
@@ -60,7 +62,8 @@ public class Main {
     private int number;
     private boolean ser;
     private String mode;
-    private String level;
+    private int parLevel;
+    private String logLevel;
 
     Main(final String[] args) {
         assert (args != null);
@@ -76,7 +79,8 @@ public class Main {
             number = arguments.getInt(ARG_NUMBER, DEFAULT_NUMBER);
             ser = arguments.getBoolean(ARG_SER, DEFAULT_SER);
             mode = arguments.getString(ARG_MODE, DEFAULT_MODE);
-            level = arguments.getString(ARG_LEVEL, DEFAULT_LEVEL);
+            parLevel = arguments.getInt(ARG_PAR_LEVEL, DEFAULT_PAR_LEVEL);
+            logLevel = arguments.getString(ARG_LOG_LEVEL, DEFAULT_LOG_LEVEL);
         } catch (ArgumentsException e) {
             reportError(e);
         }
@@ -96,15 +100,18 @@ public class Main {
     final void run() {
         try {
             setLogLevel();
-            WordCounter counter = new WordCounter(Paths.get(path), getPredicate(), !ser);
+            WordCounter counter = new WordCounter(Paths.get(path), getPredicate(), !ser, parLevel);
+            long t0 = System.currentTimeMillis();
             WordCounts wc = counter.count();
-            if (Logger.isDebug()) {
-                wc.print(System.out);
-            }
-            WordCountAnalyzer analyzer = new WordCountAnalyzer(wc, !ser);
+            long t1 = System.currentTimeMillis();
+            Logger.info("Counting took %d ms", t1 - t0);
+            WordCountAnalyzer analyzer = new WordCountAnalyzer(wc, !ser, parLevel);
             if (mode.equals(MODE_TOP) || mode.equals(MODE_BOTTOM)) {
                 int numberx = Math.min(wc.getSize(), number);
+                long t2 = System.currentTimeMillis();
                 TopWordCounts twc = analyzer.findTop(numberx, getComparator());
+                long t3 = System.currentTimeMillis();
+                Logger.info("Analysis took %d ms", t3 - t2);
                 twc.print(System.out);
             }
         } catch (final Exception e) {
@@ -113,7 +120,7 @@ public class Main {
     }
     
     private void setLogLevel() {
-        switch (level) {
+        switch (logLevel) {
         case LEVEL_ERROR:
             Logger.level = Logger.Level.ERROR;
             break;

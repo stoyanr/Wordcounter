@@ -36,9 +36,9 @@ public class WordCounts {
         this(1);
     }
     
-    public WordCounts(int concurrencyLevel) {
-        this.m = (concurrencyLevel == 1) ? new HashMap<String, AtomicInteger>() : 
-            new ConcurrentHashMap<String, AtomicInteger>(4096, 0.75f, concurrencyLevel);
+    public WordCounts(int parLevel) {
+        this.m = (parLevel == 1) ? new HashMap<String, AtomicInteger>() : 
+            new ConcurrentHashMap<String, AtomicInteger>(4096, 0.75f, parLevel);
     }
     
     public int getSize() {

@@ -17,14 +17,16 @@
  */
 package com.stoyanr.wordcounter;
 
-import com.stoyanr.util.CharPredicate;
 import static com.stoyanr.wordcounter.WordUtils.countWords;
 import static com.stoyanr.wordcounter.WordUtils.getEndWordIndex;
+import static com.stoyanr.util.FileUtils.readFileToString;
+import static com.stoyanr.util.FileUtils.readFileAsync;
 
+import com.stoyanr.util.CharPredicate;
 import com.stoyanr.util.FileUtils;
-import com.stoyanr.util.ProducerConsumerComputer;
-import com.stoyanr.util.ProducerConsumerComputer.Putter;
-import com.stoyanr.util.ProducerConsumerComputer.Taker;
+import com.stoyanr.util.ProducerConsumerExecutor;
+import com.stoyanr.util.ProducerConsumerExecutor.Putter;
+import com.stoyanr.util.ProducerConsumerExecutor.Taker;
 import java.io.IOException;
 import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
@@ -36,15 +38,19 @@ import java.util.EnumSet;
 
 public class WordCounter {
 
-    private static final int PAR_LEVEL = Runtime.getRuntime().availableProcessors();
     private static final int MAX_ST_SIZE = 1024 * 1024;
     private static final EnumSet<FileVisitOption> OPTS = EnumSet.of(FileVisitOption.FOLLOW_LINKS);
     
     private final Path path;
     private final CharPredicate isWordChar;
     private final boolean par;
+    private final int parLevel;
     
     public WordCounter(Path path, CharPredicate isWordChar, boolean par) {
+        this(path, isWordChar, par, ProducerConsumerExecutor.DEFAULT_PAR_LEVEL);
+    }
+
+    public WordCounter(Path path, CharPredicate isWordChar, boolean par, int parLevel) {
         if (path == null || !Files.exists(path)) {
             throw new IllegalArgumentException("Path is null or doesn't exist.");
         }
@@ -54,6 +60,7 @@ public class WordCounter {
         this.path = path;
         this.isWordChar = isWordChar;
         this.par = par;
+        this.parLevel = parLevel;
     }
 
     public WordCounts count() throws IOException {
@@ -64,38 +71,66 @@ public class WordCounter {
         final WordCounts wc;
         if (Files.isDirectory(path)) {
             wc = new WordCounts();
-            Files.walkFileTree(path, OPTS, Integer.MAX_VALUE,
-                new WordCounterFileVisitor((file) -> 
-                    wc.add(countWords(FileUtils.readFileToString(file), isWordChar))));
+            FileVisitor<Path> visitor = new WordCounterFileVisitor(
+                (file) -> wc.add(countWords(readFileToString(file), isWordChar)));
+            Files.walkFileTree(path, OPTS, Integer.MAX_VALUE, visitor);
         } else {
-            wc = countWords(FileUtils.readFileToString(path), isWordChar);
+            wc = countWords(readFileToString(path), isWordChar);
         }
         return wc;
     }
 
     private WordCounts countPar() {
-        WordCounts wc = new WordCounts(PAR_LEVEL);
-        new ProducerConsumerComputer<String>((putter) -> read(putter), 
-            (taker) -> count(wc, taker)).compute();
+        WordCounts wc = new WordCounts(parLevel);
+        ProducerConsumerExecutor<Path, String> executor = new ProducerConsumerExecutor<Path, String>(
+            (putter) -> collect(putter), 
+            (taker, putter) -> read(taker, putter),
+            (taker) -> count(wc, taker), parLevel);
+        executor.execute();
+        executor.finish();
         return wc;
     }
 
-    private void read(Putter<String> putter) {
+    private void collect(Putter<Path> putter) {
         try {
             if (Files.isDirectory(path)) {
-                readDirectory(path, putter);
+                FileVisitor<Path> visitor = new WordCounterFileVisitor(
+                    (file) -> collect(file, putter));
+                Files.walkFileTree(path, OPTS, Integer.MAX_VALUE, visitor);
             } else {
-                readFile(path, putter);
+                collect(path, putter);
             }
         } catch (IOException e) {
-            throw new WordCounterException(String.format("Can't read file %s: %s", path.toString(), 
-                e.getMessage()), e);
+            throw new WordCounterException(String.format("Can't walk directory tree %s: %s", 
+                path.toString(), e.getMessage()), e);
+        }
+    }
+    
+    private void collect(Path file, Putter<Path> putter) {
+        try {
+            putter.put(file);
+        } catch (InterruptedException e) {
         }
     }
 
-    private void readDirectory(Path dir, Putter<String> putter) throws IOException {
-        Files.walkFileTree(dir, OPTS, Integer.MAX_VALUE, 
-            new WordCounterFileVisitor((file) -> readFile(file, putter)));
+    private void read(Taker<Path> taker, Putter<String> putter) {
+        boolean finished = false;
+        while (!finished) {
+            Path file = null;
+            try {
+                file = taker.take();
+                if (file != null) {
+                    readFile(file, putter);
+                } else {
+                    finished = true;
+                }
+            } catch (InterruptedException e) {
+                finished = true;
+            } catch (IOException e) {
+                throw new WordCounterException(String.format("Can't read file %s: %s", 
+                    file.toString(), e.getMessage()), e);
+            }
+        }
     }
 
     private void readFile(Path file, Putter<String> putter) throws IOException {
@@ -104,13 +139,11 @@ public class WordCounter {
                 String text = FileUtils.readFileToString(file);
                 putter.put(text);
             } else {
-                FileUtils.readFileAsync(file, (String text, String state) -> {
-                    return putText(text, state, putter);
+                readFileAsync(file, (String text, String state) -> { 
+                    return putText(text, state, putter); 
                 });
             }
         } catch (InterruptedException e) {
-            throw new WordCounterException(String.format("Interrupted while reading file %s: %s", 
-                file.toString(), e.getMessage()), e);
         }
     }
 
@@ -128,7 +161,11 @@ public class WordCounter {
         while (!finished) {
             try {
                 String text = taker.take();
-                counts.add(countWords(text, isWordChar));
+                if (text != null) {
+                    counts.add(countWords(text, isWordChar));
+                } else {
+                    finished = true;
+                }
             } catch (InterruptedException e) {
                 finished = true;
             }

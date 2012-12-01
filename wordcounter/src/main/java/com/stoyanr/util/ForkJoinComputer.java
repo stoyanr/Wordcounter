@@ -22,7 +22,7 @@ import java.util.concurrent.RecursiveTask;
 
 public class ForkJoinComputer<T> {
     
-    private static final int PAR_LEVEL = Runtime.getRuntime().availableProcessors();
+    public static final int DEFAULT_PAR_LEVEL = Runtime.getRuntime().availableProcessors();
     
     public interface Computer<T> {
         T compute(int lo, int hi);
@@ -36,13 +36,24 @@ public class ForkJoinComputer<T> {
     private final int threshold;
     private final Computer<T> computer;
     private final Merger<T> merger;
-    private final ForkJoinPool forkJoinPool = new ForkJoinPool();
+    private final int parLevel;
+    private final ForkJoinPool forkJoinPool;
     
     public ForkJoinComputer(int size, int threshlod, Computer<T> computer, Merger<T> merger) {
+        this(size, threshlod, computer, merger, DEFAULT_PAR_LEVEL);
+    }
+
+    public ForkJoinComputer(int size, int threshlod, Computer<T> computer, Merger<T> merger, 
+        int parLevel) {
+        if (computer == null || merger == null) {
+            throw new NullPointerException();
+        }
         this.size = size;
         this.threshold = threshlod;
         this.computer = computer;
         this.merger = merger;
+        this.parLevel = parLevel;
+        this.forkJoinPool = new ForkJoinPool(parLevel);
     }
 
     public T compute() {
@@ -64,7 +75,7 @@ public class ForkJoinComputer<T> {
         protected T compute() {
             logStarting();
             T result;
-            if (hi - lo <= Math.max(size / PAR_LEVEL, threshold)) {
+            if (hi - lo <= Math.max(size / parLevel, threshold)) {
                 result = computer.compute(lo, hi);
             } else {
                 int mid = (lo + hi) >>> 1;

@@ -82,12 +82,10 @@ public class WordCounter {
 
     private WordCounts countPar() {
         WordCounts wc = new WordCounts(parLevel);
-        ProducerConsumerExecutor<Path, String> executor = new ProducerConsumerExecutor<Path, String>(
+        new ProducerConsumerExecutor<Path, String>(
             (putter) -> collect(putter), 
             (taker, putter) -> read(taker, putter),
-            (taker) -> count(wc, taker), parLevel);
-        executor.execute();
-        executor.finish();
+            (taker) -> count(wc, taker), parLevel).execute();
         return wc;
     }
 

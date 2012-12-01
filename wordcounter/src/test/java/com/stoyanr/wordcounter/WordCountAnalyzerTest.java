@@ -60,9 +60,9 @@ public class WordCountAnalyzerTest {
     public static Collection<Object[]> data() {
         // @formatter:off
         Object[][] data = new Object[][] { 
-            { COUNTS1, TWC1, 2 }, 
-            { COUNTS2, TWC2, 1 }, 
-            { COUNTS3, TWC3, 2 }, 
+            { COUNTS1, TWC1, 2, 6 }, 
+            { COUNTS2, TWC2, 1, 4 }, 
+            { COUNTS3, TWC3, 2, 5 }, 
         };
         // @formatter:on
         return asList(data);
@@ -71,13 +71,15 @@ public class WordCountAnalyzerTest {
     private final WordCounts wc;
     private final TopWordCounts twc;
     private final int number;
+    private final int total;
 
     private WordCountAnalyzer a1, a2;
 
-    public WordCountAnalyzerTest(WordCounts wc, TopWordCounts twc, int number) {
+    public WordCountAnalyzerTest(WordCounts wc, TopWordCounts twc, int number, int total) {
         this.wc = wc;
         this.twc = twc;
         this.number = number;
+        this.total = total;
     }
 
     @Before
@@ -87,13 +89,23 @@ public class WordCountAnalyzerTest {
     }
 
     @Test
-    public void testAnalyze() {
+    public void testFindTopSer() {
         assertEquals(twc, a1.findTop(number, COMP));
     }
 
     @Test
-    public void testAnalyzeParallel() {
+    public void testFindTopPar() {
         assertEquals(twc, a2.findTop(number, COMP));
+    }
+
+    @Test
+    public void testGetTotalSer() {
+        assertEquals(total, a1.getTotal());
+    }
+
+    @Test
+    public void testGetTotalPar() {
+        assertEquals(total, a2.getTotal());
     }
 
     private static Set<String> asSet(String... strings) {

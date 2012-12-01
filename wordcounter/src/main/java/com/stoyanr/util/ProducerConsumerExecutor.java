@@ -84,12 +84,6 @@ public class ProducerConsumerExecutor<T1, T2> {
         producers = createProducers();
         mediators = createMediators();
         consumers = createConsumers();
-    }
-    
-    public void finish() {
-        if (producers == null || mediators == null || consumers == null) {
-            throw new IllegalStateException();
-        }
         try {
             shutdown(producers);
             while (!q1.isEmpty()) {
@@ -100,12 +94,12 @@ public class ProducerConsumerExecutor<T1, T2> {
                 Thread.yield();
             }
             shutdown(consumers);
-            producers = null;
-            mediators = null;
-            consumers = null;
         } catch (InterruptedException e) {
             throw new RuntimeException(String.format("Interrupted: %s", e.getMessage()), e);
         }
+        producers = null;
+        mediators = null;
+        consumers = null;
     }
     
     private ScheduledExecutorService createProducers() {

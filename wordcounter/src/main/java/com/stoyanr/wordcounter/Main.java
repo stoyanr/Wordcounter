@@ -41,6 +41,7 @@ public class Main {
 
     private static final String MODE_TOP = "top";
     private static final String MODE_BOTTOM = "bottom";
+    private static final String MODE_TOTAL = "total";
 
     private static final String LEVEL_ERROR = "error";
     private static final String LEVEL_WARNING = "warning";
@@ -104,16 +105,19 @@ public class Main {
             long t0 = System.currentTimeMillis();
             WordCounts wc = counter.count();
             long t1 = System.currentTimeMillis();
-            Logger.info("Counting took %d ms", t1 - t0);
             WordCountAnalyzer analyzer = new WordCountAnalyzer(wc, !ser, parLevel);
-            if (mode.equals(MODE_TOP) || mode.equals(MODE_BOTTOM)) {
-                int numberx = Math.min(wc.getSize(), number);
-                long t2 = System.currentTimeMillis();
-                TopWordCounts twc = analyzer.findTop(numberx, getComparator());
-                long t3 = System.currentTimeMillis();
-                Logger.info("Analysis took %d ms", t3 - t2);
-                twc.print(System.out);
+            long tx = 0;
+            switch (mode) {
+            case MODE_TOP:
+            case MODE_BOTTOM:
+                tx = runTopBottom(analyzer, wc);
+                break;
+            case MODE_TOTAL:
+                tx = runTotal(analyzer, wc);
+                break;
             }
+            Logger.info("Counting took %d ms", t1 - t0);
+            Logger.info("Analysis took %d ms", tx);
         } catch (final Exception e) {
             reportError(e);
         }
@@ -135,13 +139,30 @@ public class Main {
             break;
         }
     }
+    
+    private long runTopBottom(WordCountAnalyzer analyzer, WordCounts wc) {
+        int nx = Math.min(wc.getSize(), number);
+        long t0 = System.currentTimeMillis();
+        TopWordCounts twc = analyzer.findTop(nx, getComparator());
+        long t1 = System.currentTimeMillis();
+        twc.print(System.out);
+        return t1 - t0;
+    }
 
+    private long runTotal(WordCountAnalyzer analyzer, WordCounts wc) {
+        long t0 = System.currentTimeMillis();
+        int total = analyzer.getTotal();
+        long t1 = System.currentTimeMillis();
+        System.out.printf("Total words: %d\n", total);
+        return t1 - t0;
+    }
+    
     private Comparator<Integer> getComparator() {
         return mode.equals(MODE_TOP) ? (x, y) -> (y - x) : (x, y) -> (x - y);
     }
     
     private CharPredicate getPredicate() {
-        return chars.isEmpty() ? (c) -> Character.isAlphabetic(c) : 
+        return chars.isEmpty() ? Character::isAlphabetic : 
             (c) -> Character.isAlphabetic(c) || chars.contains(c);
     }
     

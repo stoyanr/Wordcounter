@@ -19,10 +19,6 @@ package com.stoyanr.wordcounter;
 
 import com.stoyanr.util.ForkJoinComputer;
 import java.util.Comparator;
-import java.util.Iterator;
-import java.util.Map;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class WordCountAnalyzer {
 
@@ -47,6 +43,10 @@ public class WordCountAnalyzer {
 
     public TopWordCounts findTop(int number, Comparator<Integer> comparator) {
         return analyse(new FindTopAnalysis(number, comparator));
+    }
+    
+    public int getTotal() {
+        return analyse(new TotalAnalysis());
     }
     
     private <T> T analyse(Analysis<T> a) {
@@ -82,12 +82,7 @@ public class WordCountAnalyzer {
         @Override
         public TopWordCounts compute(int lo, int hi) {
             TopWordCounts result = new TopWordCounts(number, comparator);
-            Iterator<Map.Entry<String, AtomicInteger>> it = wc.getEntries().iterator();
-            advance(it, lo);
-            for (int i = lo; i < hi; i++) {
-                Map.Entry<String, AtomicInteger> e = it.next();
-                result.addIfNeeded(e.getValue().get(), e.getKey());
-            }
+            wc.forEachInRange(lo, hi, (word, count) -> result.addIfNeeded(count, word));
             return result;
         }
         
@@ -98,9 +93,19 @@ public class WordCountAnalyzer {
         }
     }
     
-    private <T> void advance(Iterator<T> it, int lo) {
-        for (int i = 0; i < lo; i++) {
-            it.next();
+    final class TotalAnalysis implements Analysis<Integer> {
+
+        @Override
+        public Integer compute(int lo, int hi) {
+            int[] result = new int[] { 0 };
+            wc.forEachInRange(lo, hi, (word, count) -> { result[0] += count; });
+            return result[0];
+        }
+        
+        @Override
+        public Integer merge(Integer r1, Integer r2) {
+            return r1 + r2;
         }
     }
+    
 }

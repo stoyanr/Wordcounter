@@ -22,29 +22,22 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.functions.Block;
 
 public class ProducerConsumerExecutor<T1, T2> {
     
     public static final int DEFAULT_PAR_LEVEL = Runtime.getRuntime().availableProcessors();
     
-    public interface Putter<T> {
-        void put(T t) throws InterruptedException;
-    }
-
-    public interface Taker<T> {
-        T take() throws InterruptedException;
-    }
-
     public interface Producer<T> {
-        void produce(Putter<T> putter);
+        void produce(Block<T> block);
     }
     
     public interface Consumer<T> {
-        void consume(Taker<T> taker);
+        void consume(T t);
     }
     
     public interface Mediator<T1, T2> {
-        void mediate(Taker<T1> taker, Putter<T2> putter);
+        void mediate(T1 t, Block<T2> block);
     }
     
     private final Producer<T1> producer;
@@ -104,14 +97,14 @@ public class ProducerConsumerExecutor<T1, T2> {
     
     private ScheduledExecutorService createProducers() {
         ScheduledExecutorService producers = new ScheduledThreadPoolExecutor(1);
-        producers.submit(() -> producer.produce(this::put1));
+        producers.submit(() -> producer.produce(this::put1x));
         return producers;
     }
 
     private ScheduledExecutorService createMediators() {
         ScheduledExecutorService mediators = new ScheduledThreadPoolExecutor(parLevel);
         for (int i = 0; i < parLevel; i++) {
-            mediators.submit(() -> mediator.mediate(this::take1, this::put2));
+            mediators.submit(() -> mediate(mediator, this::put2x));
         }
         return mediators;
     }
@@ -119,7 +112,7 @@ public class ProducerConsumerExecutor<T1, T2> {
     private ScheduledExecutorService createConsumers() {
         ScheduledExecutorService consumers = new ScheduledThreadPoolExecutor(parLevel);
         for (int i = 0; i < parLevel; i++) {
-            consumers.submit(() -> consumer.consume(this::take2));
+            consumers.submit(() -> consume(consumer));
         }
         return consumers;
     }
@@ -128,7 +121,53 @@ public class ProducerConsumerExecutor<T1, T2> {
         ses.shutdown();
         return ses.awaitTermination(24, TimeUnit.HOURS);
     }
+    
+    private void mediate(Mediator<T1, T2> mediator, Block<T2> block) {
+        boolean finished = false;
+        while (!finished) {
+            try {
+                T1 t = take1();
+                if (t != null) {
+                    mediator.mediate(t, block);
+                } else {
+                    finished = true;
+                }
+            } catch (InterruptedException e) {
+                finished = true;
+            }
+        }
+    }
 
+    private void consume(Consumer<T2> consumer) {
+        boolean finished = false;
+        while (!finished) {
+            try {
+                T2 t = take2();
+                if (t != null) {
+                    consumer.consume(t);
+                } else {
+                    finished = true;
+                }
+            } catch (InterruptedException e) {
+                finished = true;
+            }
+        }
+    }
+
+    private void put1x(T1 t) {
+        try {
+            put1(t);
+        } catch (InterruptedException e) {
+        }
+    }
+    
+    private void put2x(T2 t) {
+        try {
+            put2(t);
+        } catch (InterruptedException e) {
+        }
+    }
+    
     private void put1(T1 t) throws InterruptedException {
         logDone("Producer", t);
         long t0 = logQueueFull("Producer", q1);

@@ -22,7 +22,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.Map.Entry;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +30,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.stoyanr.util.Logger;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @RunWith(Parameterized.class)
 public class WordCountAnalyzerPerfTest {
@@ -110,9 +108,7 @@ public class WordCountAnalyzerPerfTest {
 
     private TopWordCounts getTopWordCounts(WordCounts wc) {
         TopWordCounts twc = new TopWordCounts(number, COMP);
-        for (Entry<String, AtomicInteger> e : wc.getEntries()) {
-            twc.add(e.getValue().get(), e.getKey());
-        }
+        wc.forEachInRange(0, wc.getSize(), (word, count) -> twc.add(count, word));
         return twc;
     }
 

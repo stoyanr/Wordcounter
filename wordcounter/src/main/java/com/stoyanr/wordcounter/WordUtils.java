@@ -21,16 +21,16 @@ import com.stoyanr.util.CharPredicate;
 
 public class WordUtils {
     
-    public static WordCounts countWords(String text, CharPredicate isWordChar) {
+    public static WordCounts countWords(String text, CharPredicate pred) {
         assert (text != null);
         WordCounts result = new WordCounts();
         int i = 0;
         while (i < text.length()) {
-            while (i < text.length() && !isWordChar.test(text.charAt(i))) {
+            while (i < text.length() && !pred.test(text.charAt(i))) {
                 i++;
             }
             int bi = i;
-            while (i < text.length() && isWordChar.test(text.charAt(i))) {
+            while (i < text.length() && pred.test(text.charAt(i))) {
                 i++;
             }
             int ei = i;
@@ -41,9 +41,9 @@ public class WordUtils {
         return result;
     }
     
-    public static int getEndWordIndex(String text, CharPredicate isWordChar) {
+    public static int getEndWordIndex(String text, CharPredicate pred) {
         int ei = text.length();
-        while (ei > 0 && isWordChar.test(text.charAt(ei - 1))) {
+        while (ei > 0 && pred.test(text.charAt(ei - 1))) {
             ei--;
         }
         return ei;

@@ -22,6 +22,8 @@ import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collection;
 
 import org.apache.commons.io.FileUtils;
@@ -32,8 +34,6 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.stoyanr.util.Logger;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @RunWith(Parameterized.class)
 public class WordCounterPerfTest {

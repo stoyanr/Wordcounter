@@ -17,8 +17,9 @@
  */
 package com.stoyanr.wordcounter;
 
-import com.stoyanr.util.ForkJoinComputer;
 import java.util.Comparator;
+
+import com.stoyanr.util.ForkJoinComputer;
 
 public class WordCountAnalyzer {
 

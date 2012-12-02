@@ -17,7 +17,6 @@
  */
 package com.stoyanr.wordcounter;
 
-import com.stoyanr.util.Logger;
 import java.io.PrintStream;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -26,6 +25,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+
+import com.stoyanr.util.Logger;
 
 public class TopWordCounts {
     

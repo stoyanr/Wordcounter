@@ -17,7 +17,6 @@
  */
 package com.stoyanr.wordcounter;
 
-import com.stoyanr.util.Logger;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,6 +27,9 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.functions.BiBlock;
+
+import com.stoyanr.util.Logger;
 
 public class WordCounts {
     
@@ -86,18 +88,14 @@ public class WordCounts {
         }
     }
     
-    public interface Block<T1, T2> {
-        void execute(T1 t1, T2 t2);
-    }
-    
-    public void forEachInRange(int lo, int hi, Block<String, Integer> block) {
+    public void forEachInRange(int lo, int hi, BiBlock<String, Integer> block) {
         Iterator<Map.Entry<String, AtomicInteger>> it = m.entrySet().iterator();
         for (int i = 0; i < lo; i++) {
             it.next();
         }
         for (int i = lo; i < hi; i++) {
             Map.Entry<String, AtomicInteger> e = it.next();
-            block.execute(e.getKey(), e.getValue().get());
+            block.apply(e.getKey(), e.getValue().get());
         }
     }
 

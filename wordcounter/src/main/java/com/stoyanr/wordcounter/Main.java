@@ -19,14 +19,15 @@ package com.stoyanr.wordcounter;
 
 import java.util.Arrays;
 
-import com.stoyanr.util.Arguments;
-import com.stoyanr.util.ArgumentsException;
-import com.stoyanr.util.CharPredicate;
-import com.stoyanr.util.Logger;
 import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+
+import com.stoyanr.util.Arguments;
+import com.stoyanr.util.ArgumentsException;
+import com.stoyanr.util.CharPredicate;
+import com.stoyanr.util.Logger;
 
 public class Main {
     private static final String ARG_PATH = "p";

@@ -78,7 +78,7 @@ public class WordCounterPerfTest {
         Logger.level = Logger.Level.INFO;
         wc = new WordCounts();
         tree = createTree(wc);
-        counter = new WordCounter(tree, Character::isAlphabetic, par);
+        counter = new WordCounter(tree, Character::isAlphabetic, null, par);
     }
 
     @Test
@@ -110,6 +110,9 @@ public class WordCounterPerfTest {
         for (int i = 0; i < numWords; i++) {
             int index = (int) (Math.random() * VOCABULARY.length);
             String word = VOCABULARY[index];
+            if ((int) (Math.random() * 2) == 0) {
+                word = word.toUpperCase();
+            }
             sb.append(word);
             if (i < numWords - 1) {
                 appendDelimiters(sb);

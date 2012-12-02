@@ -83,14 +83,14 @@ public class WordCounterTest {
 
     @Test
     public void testCountWordsFile() throws Exception {
-        WordCounter counter = new WordCounter(createFile(), Character::isAlphabetic, false);
+        WordCounter counter = new WordCounter(createFile(), Character::isAlphabetic, null, false);
         WordCounts result = counter.count();
         assertEquals(combineCounts(), result);
     }
 
     @Test
     public void testCountWordsTree() throws Exception {
-        WordCounter counter = new WordCounter(createTree(), Character::isAlphabetic, false);
+        WordCounter counter = new WordCounter(createTree(), Character::isAlphabetic, null, false);
         WordCounts result = counter.count();
         assertEquals(combineCounts(), result);
     }

@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.functions.Block;
+import java.util.functions.UnaryOperator;
 
 import com.stoyanr.util.CharPredicate;
 import com.stoyanr.util.FileUtils;
@@ -38,14 +39,16 @@ public class WordCounter {
     
     private final Path path;
     private final CharPredicate pred;
+    private final UnaryOperator<String> op;
     private final boolean par;
     private final int parLevel;
     
-    public WordCounter(Path path, CharPredicate pred, boolean par) {
-        this(path, pred, par, ProducerConsumerExecutor.DEFAULT_PAR_LEVEL);
+    public WordCounter(Path path, CharPredicate pred, UnaryOperator<String> op, boolean par) {
+        this(path, pred, op, par, ProducerConsumerExecutor.DEFAULT_PAR_LEVEL);
     }
 
-    public WordCounter(Path path, CharPredicate pred, boolean par, int parLevel) {
+    public WordCounter(Path path, CharPredicate pred, UnaryOperator<String> op, boolean par, 
+        int parLevel) {
         if (path == null || !Files.exists(path)) {
             throw new IllegalArgumentException("Path is null or doesn't exist.");
         }
@@ -54,6 +57,7 @@ public class WordCounter {
         }
         this.path = path;
         this.pred = pred;
+        this.op = op;
         this.par = par;
         this.parLevel = parLevel;
     }
@@ -68,9 +72,9 @@ public class WordCounter {
             if (Files.isDirectory(path)) {
                 wc = new WordCounts();
                 Files.walkFileTree(path, new FileVisitor(
-                    (file) -> wc.add(countWords(readFileToString(file), pred))));
+                    (file) -> wc.add(countWords(readFileToString(file), pred, op))));
             } else {
-                wc = countWords(readFileToString(path), pred);
+                wc = countWords(readFileToString(path), pred, op);
             }
         } catch (IOException e) {
             throw new WordCounterException(String.format("Can't walk directory tree %s: %s", 
@@ -93,7 +97,7 @@ public class WordCounter {
         new ProducerConsumerExecutor<Path, String>(
             (block) -> collectPaths(block), 
             (file, block) -> readFileToBlock(file, block),
-            (text) -> wc.add(countWords(text, pred)), parLevel).execute();
+            (text) -> wc.add(countWords(text, pred, op)), parLevel).execute();
         return wc;
     }
 

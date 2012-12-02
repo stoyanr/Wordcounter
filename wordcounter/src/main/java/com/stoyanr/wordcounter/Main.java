@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.functions.UnaryOperator;
 
 import com.stoyanr.util.Arguments;
 import com.stoyanr.util.ArgumentsException;
@@ -32,13 +33,15 @@ import com.stoyanr.util.Logger;
 public class Main {
     private static final String ARG_PATH = "p";
     private static final String ARG_CHARS = "c";
+    private static final String ARG_IGNORE_CASE = "i";
     private static final String ARG_NUMBER = "n";
     private static final String ARG_SER = "s";
     private static final String ARG_MODE = "m";
     private static final String ARG_PAR_LEVEL = "r";
     private static final String ARG_LOG_LEVEL = "l";
-    private static final String ARGS_SCHEMA = ARG_PATH + "*," + ARG_CHARS + "*," + ARG_NUMBER
-        + "#," + ARG_SER + "!," + ARG_MODE + "*," + ARG_PAR_LEVEL + "#," + ARG_LOG_LEVEL + "*";
+    private static final String ARGS_SCHEMA = ARG_PATH + "*," + ARG_CHARS + "*," + 
+        ARG_IGNORE_CASE + "!," + ARG_NUMBER  + "#," + ARG_SER + "!," + ARG_MODE + "*," + 
+        ARG_PAR_LEVEL + "#," + ARG_LOG_LEVEL + "*";
 
     private static final String MODE_TOP = "top";
     private static final String MODE_BOTTOM = "bottom";
@@ -51,6 +54,7 @@ public class Main {
 
     private static final String DEFAULT_PATH = ".";
     private static final String DEFAULT_CHARS = "";
+    private static final boolean DEFAULT_IGNORE_CASE = false;
     private static final int DEFAULT_NUMBER = 10;
     private static final boolean DEFAULT_SER = false;
     private static final String DEFAULT_MODE = MODE_TOP;
@@ -61,6 +65,7 @@ public class Main {
 
     private String path;
     private Set<Character> chars;
+    private boolean ignoreCase;
     private int number;
     private boolean ser;
     private String mode;
@@ -78,6 +83,7 @@ public class Main {
             final Arguments arguments = new Arguments(ARGS_SCHEMA, args);
             path = arguments.getString(ARG_PATH, DEFAULT_PATH);
             chars = createChars(arguments.getString(ARG_CHARS, DEFAULT_CHARS));
+            ignoreCase = arguments.getBoolean(ARG_IGNORE_CASE, DEFAULT_IGNORE_CASE);
             number = arguments.getInt(ARG_NUMBER, DEFAULT_NUMBER);
             ser = arguments.getBoolean(ARG_SER, DEFAULT_SER);
             mode = arguments.getString(ARG_MODE, DEFAULT_MODE);
@@ -102,7 +108,8 @@ public class Main {
     final void run() {
         try {
             setLogLevel();
-            WordCounter counter = new WordCounter(Paths.get(path), getPredicate(), !ser, parLevel);
+            WordCounter counter = new WordCounter(Paths.get(path), getPredicate(), getOperator(), 
+                !ser, parLevel);
             long t0 = System.currentTimeMillis();
             WordCounts wc = counter.count();
             long t1 = System.currentTimeMillis();
@@ -165,6 +172,10 @@ public class Main {
     private CharPredicate getPredicate() {
         return chars.isEmpty() ? Character::isAlphabetic : 
             (c) -> Character.isAlphabetic(c) || chars.contains(c);
+    }
+    
+    private UnaryOperator<String> getOperator() {
+        return (ignoreCase) ? (s) -> s.toLowerCase() : null;
     }
     
     private static void reportError(final Exception e) {

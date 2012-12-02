@@ -17,11 +17,17 @@
  */
 package com.stoyanr.wordcounter;
 
+import java.util.functions.UnaryOperator;
+
 import com.stoyanr.util.CharPredicate;
 
 public class WordUtils {
     
     public static WordCounts countWords(String text, CharPredicate pred) {
+        return countWords(text, pred, null);
+    }
+
+    public static WordCounts countWords(String text, CharPredicate pred, UnaryOperator<String> op) {
         assert (text != null);
         WordCounts result = new WordCounts();
         int i = 0;
@@ -35,7 +41,11 @@ public class WordUtils {
             }
             int ei = i;
             if (bi != ei) {
-                result.add(text.substring(bi, ei), 1);
+                String word = text.substring(bi, ei);
+                if (op != null) {
+                    word = op.operate(word);
+                }
+                result.add(word, 1);
             }
         }
         return result;

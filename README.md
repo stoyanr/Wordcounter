@@ -227,16 +227,74 @@ The table below compares the performance of word counting and analysis under the
 
 ### Word Counting Performance
 
-Implementation      Files    Words  Size (MB)   Time (ms)
------------------- ------ -------- ---------- -----------
-Serial                  1 10000000        ~65 2200 - 2400
-Parallel                1 10000000        ~65  500 -  600
-Serial                100 10000000        ~65 1600 - 1800
-Parallel              100 10000000        ~65  500 -  600
+<table>
+<thead>
+<tr class="header">
+<th align="left">Implementation</th>
+<th align="right">Files</th>
+<th align="right">Words</th>
+<th align="right">Size (MB)</th>
+<th align="right">Time (ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Serial</td>
+<td align="right">1</td>
+<td align="right">10000000</td>
+<td align="right">~65</td>
+<td align="right">2200 - 2400</td>
+</tr>
+<tr class="even">
+<td align="left">Parallel</td>
+<td align="right">1</td>
+<td align="right">10000000</td>
+<td align="right">~65</td>
+<td align="right">500 - 600</td>
+</tr>
+<tr class="odd">
+<td align="left">Serial</td>
+<td align="right">100</td>
+<td align="right">10000000</td>
+<td align="right">~65</td>
+<td align="right">1600 - 1800</td>
+</tr>
+<tr class="even">
+<td align="left">Parallel</td>
+<td align="right">100</td>
+<td align="right">10000000</td>
+<td align="right">~65</td>
+<td align="right">500 - 600</td>
+</tr>
+</tbody>
+</table>
 
 ### Find Top Analysis Performance
 
-Implementation        Words  Max Count  Top   Time (ms)
------------------- -------- ---------- ---- -----------
-Serial              2000000   10000000   10   200 - 250
-Parallel            2000000   10000000   10   200 - 250
+<table>
+<thead>
+<tr class="header">
+<th align="left">Implementation</th>
+<th align="right">Words</th>
+<th align="right">Max Count</th>
+<th align="right">Top</th>
+<th align="right">Time (ms)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">Serial</td>
+<td align="right">2000000</td>
+<td align="right">10000000</td>
+<td align="right">10</td>
+<td align="right">200 - 250</td>
+</tr>
+<tr class="even">
+<td align="left">Parallel</td>
+<td align="right">2000000</td>
+<td align="right">10000000</td>
+<td align="right">10</td>
+<td align="right">200 - 250</td>
+</tr>
+</tbody>
+</table>

@@ -220,7 +220,7 @@ See:
 
 I found that the parallel Producer / Consumer word counting implementation is adapting nicely to the different number of cores and I/O speeds. It is significantly faster than the serial implementation. Unlike it, the parallel Fork / Join analysis implementation is only faster than the serial one when testing with an unrealistically large number of unique words, and only by a mild degree. With small number of unique words, it is actually *slower* than the serial one.
 
-The table below compares the performance of word counting and analysis under the following conditions:
+The tables below compare the performance of word counting and find top analysis under the following conditions:
 + CPU AMD Phenom II X4 965 3.4 GHz (4 cores), 4 GB RAM, Windows 7, JDK 8
 + Default options: words consisting of alphabetic characters, case-sensitive
 + Default parallelism level, equal to the number of cores

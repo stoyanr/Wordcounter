@@ -1,15 +1,15 @@
 ## <a id="Introduction"></a>Introduction
 
-**Wordcounter** is a Java library and command-line utility for counting words in text files and directory trees and performing analysis on the word counts, such as finding the top X most used words in all files. It makes heavy use of parallel computing to use all available cores when performing the analysis.
+**Wordcounter** is a Java library and command-line utility for counting words in text files and directory trees and performing analysis on the word counts, such as finding the top N most used words in all files. It makes heavy use of parallel computing to use all available cores when performing the analysis.
 
 The library uses JDK 8 [lambdas](http://openjdk.java.net/projects/lambda/), as well as new JDK 7 features such as [Fork / Join](http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) and [NIO.2](http://docs.oracle.com/javase/tutorial/essential/io/fileio.html). It is built and can only be used with the [early access version of JDK 8 with lambda support](http://jdk8.java.net/lambda/).
 
-With the introduction of lambdas and their supporting features in JDK 8, the way we build software in Java is going to change. If you would like to get an idea how your Java code may look like in a few years, you may take a look at Wordcounter. Unlike most resources available at the moment, this is not a tutorial, but a real working project.
+With the introduction of lambdas and their supporting features in JDK 8, the way we build software in Java is going to change. If you would like to get an idea how your Java code might look like in a few years, you may take a look at Wordcounter. Unlike most resources available at the moment, this is not a tutorial, but a real working project.
 
 The latest binary, javadoc, and sources packages can be found in [downloads](https://github.com/downloads/stoyanr/Wordcounter/):
-+ [wordcounter-1.0.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0.jar)
-+ [wordcounter-1.0-javadoc.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0-javadoc.jar)
-+ [wordcounter-1.0-sources.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0-sources.jar)
++ [wordcounter-1.0.4.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0.4.jar)
++ [wordcounter-1.0.4-javadoc.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0.4-javadoc.jar)
++ [wordcounter-1.0.4-sources.jar](https://github.com/downloads/stoyanr/Wordcounter/wordcounter-1.0.4-sources.jar)
 
 This work is licensed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
@@ -17,16 +17,19 @@ This work is licensed under the [Apache License, Version 2.0](http://www.apache.
 
 ### Library Features
 
-+ Find the usage of all words in a string, a single text file, or a directory tree containing text files.
-+ Analyze the word usages to find the top X most used or the bottom X least used words.
++ Count all words in a string, a single text file, or a directory tree containing text files.
++ Analyze the word counts to find the top N most used words, the bottom N least used words, or the total word count.
++ Specify whether a character is a word character via an external predicate.
++ Specify an optional operation to be performed on words, for example converting to lower case, via an external operator.
 + Choose between non-parallel and parallel implementations to compare their performance.
++ Specify the parallelism level to be a value different from the number of cores, if you need to.
 
 ### Programming Highlights
 
-+ Uses [Producer / Consumer](http://en.wikipedia.org/wiki/Producer-consumer_problem) for counting the words in parallel threads while reading them. A single producer task reads all files to strings and puts them in a `BlockingQueue`. Multiple consumer threads take strings from the queue and count their words, accumulating the result in a `ConcurrentHashMap`.
-+ Uses [Fork / Join](http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) for performing analysis on the word counts. With large maps, a `RecursiveTask` forks itself until reaching the desired concurrency level and then joins the results.
++ Uses [Producer / Consumer](http://en.wikipedia.org/wiki/Producer-consumer_problem) for reading files and counting the words in each file in parallel. The actual mechanism is encapsulated in a generic, reusable implementation.
++ Uses [Fork / Join](http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) for performing analysis on the word counts. Here again the actual mechanism is encapsulated in a generic, reusable implementation.
 + Uses [NIO.2](http://docs.oracle.com/javase/tutorial/essential/io/fileio.html) for traversing directory trees and reading files.
-+ Makes heavy use of [functional interfaces](http://www.lambdafaq.org/what-is-a-functional-interface/) and [lambdas](http://openjdk.java.net/projects/lambda/) in order to pass functions rather than data when appropriate.  
++ Makes heavy use of [functional interfaces](http://www.lambdafaq.org/what-is-a-functional-interface/) and [lambdas](http://openjdk.java.net/projects/lambda/) in order to pass functions rather than data where appropriate.
 + There are comprehensive unit and performance tests for the two most important classes. 
 + As usual, the code is clean, well-structured, and easy to read. Formatting, naming, and comments are uniform and consistent. A lot of attention has been put to the appropriate use of both object-oriented and functional programming techniques.
 
@@ -46,102 +49,169 @@ All options have reasonable default values so none of them is mandatory. Using t
 
 Options:
 + `-p <path>` The file or directory to search, default is ".".
-+ `-d <delimiters>` The set of delimiters to use, default is `" \t\n\r\f;,.:?!/\\'\"()[]{}<>+-*=~@#$%^&|"`.
++ `-m [top|bottom|total]` The mode, "top" stands for finding the most used words, "bottom" stands for finding the least used words, and "total" stands for finding the total count of all words.
++ `-d <chars>` Additional characters (besides alphabetic characters) to consider as word characters, default is none. By default, only alphabetic characters are considered as word characters.
++ `-i` Ignore case when searching for words, by default the search is case-sensitive.
 + `-n <number>` The number of most or least used words to find, default is 10. 0 means all available words.
-+ `-l [error|warning|info|debug]` The log level to use, default is "info". 
-+ `-m [top|bottom]` The mode, "top" stands for finding the most used words, "bottom" stands for finding the least used words.
++ `-s` Use serial instead of parallel computation, by default the computation is parallel.
++ `-r <number>` The parallelism level t use, default is the number of available cores.
++ `-l [error|warning|info|debug]` The log level to use, default is "error". 
 
 Examples:
-+ Find the top 10 most used words in the directory "root": `-p root`
-+ Find the bottom 5 least used words in the directory "rootx" with debug information: `-p rootx -n 5 -m bottom -l debug`
++ Find the top 10 most used words in the directory "words": `-p words`
++ Find the bottom 5 least used words in the directory "wordsx", considering numbers as word characters, ignoring case, with info logging: `-p wordsx -m bottom -d 1234567890 -i -n 5 -l info`
 
 ## <a id="Design"></a>Design
 
-### The WordCounter Class
+### Generic Parallel Processing Utilities
 
-The `WordCounter` class provides methods for counting words in strings, files, and directory trees. It uses a Producer / Consumer parallel implementation for doing this in the most efficient way. The two internal classes `Reader` and `Counter` provide the implementation of the producer and consumer tasks. These tasks are created using lambdas in the following way:
+#### The ForkJoinComputer Class
+
+The `ForkJoinComputer<T>` class is a generic Fork / Join computer. It divides the initial size by 2 until either reaching the specified parallelism level or falling below the specified threshold, computes each portion serially using the specified `Computer<T>`, and then joins the results of all computations using the specified `Merger<T>`. Here, `Computer` and `Merger` are functional interfaces that are defined as follows:
 
 ```java
-private ScheduledExecutorService createReaders(final File file, final BlockingQueue<String> queue) {
-    ScheduledExecutorService readers = new ScheduledThreadPoolExecutor(1);
-    readers.submit(new Reader(file, queue, this)::read);
-    return readers;
+public interface Computer<T> {
+    T compute(int lo, int hi);
+}
+    
+public interface Merger<T> {
+    T merge(T result1, T result2);
 }
 ```
 
-The construct `new Reader(file, queue, this)::read` is a *method reference* of type `Runnable` which refers to the `read` method of the newly created `Reader` object.
+This class can be used by simply instantiating it with the appropriate lambdas and then calling its `compute` method.
+
+```java
+// Calculate the sum of all integers from 1 to n, using 1000 as a threshold
+new ForkJoinComputer<Integer>(n, 1000, 
+    (lo, hi) -> { int sum = 0; for (int i = lo + 1; i <= hi; i++) sum += i; return sum; }, 
+    (a, b) -> a + b).compute();
+```
+See:
++ [ForkJoinComputer.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/util/ForkJoinComputer.java)
+
+#### The ProducerConsumerExecutor Class
+
+The `ProducerConsumerExecutor<T1, T2>` class is a generic Producer / Consumer executor. It starts a single `Producer<T1>` task and multiple `Mediator<T1, T2>` and `Consumer<T2>` tasks with their number equal to the specified parallelism level. The producer puts `T1` instances in a `BlockingQueue<T1>`. The mediators take these instances from there, convert them to `T2`, and put them in another blocking queue of type `BlockingQueue<T2>`. Finally, the consumers take the `T2` instances from the second blocking queue and process them.
+
+Here, `Producer`, `Consumer`, and `Mediator` are functional interfaces that are defined as follows:
+
+```java
+public interface Producer<T> {
+    void produce(Block<T> block);
+}
+    
+public interface Consumer<T> {
+    void consume(T t);
+}
+    
+public interface Mediator<T1, T2> {
+    void mediate(T1 t, Block<T2> block);
+}
+```
+
+In the above code, `Block` is a standard function defined in `java.util.functions`. The block passed to the `Producer` and `Mediator` methods puts the produced data in the corresponding blocking queue. 
+
+Similarly to `ForkJoinComputer`, this class can be used by simply instantiating it with the appropriate lambdas and then calling its `execute` method.
+
+See:
++ [ProducerConsumerExecutor.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/util/ProducerConsumerExecutor.java)
+
+### Wordcounter Classes
+
+#### The WordCounts and TopWordCounts Classes
+
+These two classes encapsulate the data structures used to represent raw and sorted word counts.
+
+The `WordCounts` class represents a list of words mapped to their usage counts. It provides methods for adding word counts, checking for equality, printing, and internal iterations over its contents. Internally, this class encapsulates a `Map<String, AtomicInteger>` which is either a `HashMap` or a `ConcurrentHashMap` depending on the parallelism level specified upon construction. The word counting methods of `WordUtils` and `WordCounter` return instances of this class.
+
+The `TopWordCounts` class represents a sorted list of word usage counts mapped to all words that have such counts. It provides methods for adding top word counts, checking for equality, and printing. Internally, this class encapsulates a `SortedMap<Integer, Set<String>>`. Some of the analysis methods of `WordCountAnalyzer` return instances of this class.
+
+See:
++ [WordCounts.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCounts.java)
++ [TopWordCounts.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/TopWordCounts.java)
+
+#### The WordUtils Utility Class
+
+The `WordUtils` class is a utility class that provides several overloaded static methods for counting words in strings. The central method `countWords` accepts a string, a predicate to determine whether a character is a word character, and an optional unary operator to be performed on words. 
+
+```java
+// Count all words consisting of only alphabetic chars, ignoring case
+WordCounts wc = WordUtils.countWords(text, (c) -> Character.isAlphabetic(c), (s) -> s.toLowerCase());
+```
+
+See:
++ [WordUtils.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordUtils.java)
+
+#### The WordCounter Class
+
+The `WordCounter` class provides a method for counting words in a `Path` representing a file or a directory tree, either serially or in parallel. It is initialized with a path, a predicate to determine whether a character is a word character, an optional unary operator to be performed on words, a flag indicating whether to use parallel processing, and (optionally) a parallelism level. It can be used by simply instantiating it with the appropriate lambdas and then calling its `count` method:
+
+```java
+// Count all words consisting of only alphabetic chars, ignoring case, using parallel processing
+new WordCounter(path, (c) -> Character.isAlphabetic(c), (s) -> s.toLowerCase(), true).count();
+```
+
+The parallel implementation uses `ProducerConsumerExecutor<Path, String>`. The producer simply walks the directory tree and produces `Path` instances. The mediators read the files into text pieces, and the consumers count the words in each text piece and collect them in a single `WordCounts` instance. This is done with the following piece of code:
+
+```java
+private WordCounts countPar() {
+    final WordCounts wc = new WordCounts(parLevel);
+    new ProducerConsumerExecutor<Path, String>(
+        (block) -> collectPaths(block), 
+        (file, block) -> readFileToBlock(file, block),
+        (text) -> wc.add(countWords(text, pred, op)), parLevel).execute();
+    return wc;
+}
+```
 
 See:
 + [WordCounter.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCounter.java)
-+ [Reader.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/Reader.java)
-+ [Counter.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/Counter.java)
 
-### The WordCountAnalyzer Class
+#### The WordCountAnalyzer Class
 
-The `WordCountAnalyzer` class provides methods for performing analysis on the word counts produced by `WordCounter`. The differnet analysis operations implement the internal `AnalysisOperation` interface, which provides methods for getting instances of two functional interfaces, `Analyzer` and `Merger` respectively. The `Analyzer` interface provides the core analysis method, while the `Merger` interface allows to merge the results of two analyses performed in parallel threads into one.
+The `WordCountAnalyzer` class provides methods for performing analysis on the word counts produced by `WordCounter`, such as finding the top N most used words. It is initialized with a `WordCounts` instance, a flag indicating whether to use parallel processing, and (optionally) a parallelism level. It can be used by simply instantiating it and then calling one of its methods such as `findTop` or `total`:
 
 ```java
-interface AnalysisOperation<T> {
-    interface Analyzer<T> {
-        T analyze(int lo, int hi);
-    }
-    
-    interface Merger<T> {
-        T merge(T result1, T result2);
-    }    
-    
-    Analyzer<T> getAnalyzer();
+// Find the top 10 most used words in wc
+new WordCountAnalyzer(wc, true).findTop(10, (x, y) -> (y - x));
+```
 
-    Merger<T> getMerger();
+The differnet analysis types implement the internal `Analysis<T>` interface, which is defined as follows:
+
+```java
+interface Analysis<T> {
+    T compute(int lo, int hi);
+    T merge(T r1, T r2);
 }
 ```
 
-For the moment, the only analysis operation available is `FindTopOperation`, which finds the top or bottom used words. This class implements the `getAnalyzer` and `getMerger` methods again using lambdas:
+Since the signatures of the above two methods mimic the `Computer` and `Merger` functional interfaces used by `ForkJoinComputer`, we can use fork / join for all analysis types in the following way:
+
+```java
+public TopWordCounts findTop(int number, Comparator<Integer> comparator) {
+    return analyse(new FindTopAnalysis(number, comparator));
+}
+
+private <T> T analyse(Analysis<T> a) {
+    if (par) {
+        return new ForkJoinComputer<T>(wc.getSize(), THRESHOLD, a::compute, a::merge, parLevel).compute();
+    } else {
+        return a.compute(0, wc.getSize());
+    }
+}
+```
+
+For the moment, the only analysis types available are `FindTopAnalysis` and `TotalAnalysis`. They implement the above two methods via internal iteration by passing a lambda to the `forEachInRange` method of `WordCounts`:
 
 ```java
 @Override
-public Analyzer<SortedMap<Integer, Set<String>>> getAnalyzer() {
-    return (lo, hi) -> findTop(lo, hi);
-}
-```
-
-The construct `(lo, hi) -> findTop(lo, hi)` is a *lambda expression* of type `Analyzer<SortedMap<Integer, Set<String>>>` which invokes the `findTop` method of the operation.
-
-`WordCountAnalyzer` is a pretty generic Fork / Join processor. The execution is triggerred by passing an instance of the internal class `AnalyzerTask` initialized with the analyzer and merger of the current operation to a fork / join pool:
-
-```java
-private <T> T execute(AnalysisOperation<T> op, int size, boolean parallel) {
-    if (parallel) {
-        return forkJoinPool.invoke(new AnalyzerTask<>(0, size, size, op.getAnalyzer(),
-            op.getMerger()));
-    } else {
-        return op.getAnalyzer().analyze(0, size);
-    }
-}
-```
-
-The `AnalyzerTask` itself is a `RecursiveTask` with an almost classical `compute` method:
-
-```java
-@Override
-protected T compute() {
-    T result;
-    if (hi - lo <= Math.max(size / PAR, MIN_THRESHOLD)) {
-        result = analyzer.analyze(lo, hi);
-    } else {
-        int mid = (lo + hi) >>> 1;
-        AnalyzerTask<T> t1 = new AnalyzerTask<>(lo, mid, size, analyzer, merger);
-        t1.fork();
-        AnalyzerTask<T> t2 = new AnalyzerTask<>(mid, hi, size, analyzer, merger);
-        T result2 = t2.compute();
-        T result1 = t1.join();
-        result = merger.merge(result1, result2);
-    }
+public TopWordCounts compute(int lo, int hi) {
+    TopWordCounts result = new TopWordCounts(number, comparator);
+    wc.forEachInRange(lo, hi, (word, count) -> result.addIfNeeded(count, word));
     return result;
 }
 ```
+
 See:
 + [WordCountAnalyzer.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCountAnalyzer.java)
-+ [AnalysisOperation.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/AnalysisOperation.java)
-+ [FindTopOperation.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/FindTopOperation.java)
-

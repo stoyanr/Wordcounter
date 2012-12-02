@@ -24,6 +24,18 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.functions.Block;
 
+/**
+ * A generic Producer / Consumer executor. It starts a single producer task and multiple mediator
+ * and consumer tasks with their number equal to the specified parallelism level. The producer puts 
+ * {@code T1} instances in a {@code BlockingQueue<T1>}. The mediators take these instances from 
+ * there, convert them to {@code T2}, and put them in another blocking queue of type 
+ * {@code BlockingQueue<T2>}. Finally, the consumers take the {@code T2} instances from the second 
+ * blocking queue and process them.
+ * 
+ * @author Stoyan Rachev
+ * @param <T1>
+ * @param <T2> 
+ */
 public class ProducerConsumerExecutor<T1, T2> {
     
     public static final int DEFAULT_PAR_LEVEL = Runtime.getRuntime().availableProcessors();

@@ -20,6 +20,25 @@ package com.stoyanr.util;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveTask;
 
+/**
+ * A generic Fork / Join computer. It divides the initial size by 2 until either reaching the 
+ * specified parallelism level or falling below the specified threshold, computes each portion 
+ * serially using the specified computer, and then joins the results of all computations using 
+ * the specified merger. 
+ * <p>
+ * To use this class, simply instantiate it with the appropriate lambdas and then call its 
+ * {@code compute} method:
+ * <p>
+ * <pre>
+ * // Calculate the sum of all integers from 1 to n, using 1000 as a threshold
+ * new ForkJoinComputer<Integer>(n, 1000, 
+ *     (lo, hi) -> { int sum = 0; for (int i = lo + 1; i <= hi; i++) sum += i; return sum; }, 
+ *     (a, b) -> a + b).compute();
+ * </pre>
+ * 
+ * @author Stoyan Rachev
+ * @param <T>
+ */
 public class ForkJoinComputer<T> {
     
     public static final int DEFAULT_PAR_LEVEL = Runtime.getRuntime().availableProcessors();

@@ -28,6 +28,14 @@ import java.util.TreeMap;
 
 import com.stoyanr.util.Logger;
 
+/**
+ * A sorted list of word usage counts mapped to all words that have such counts. Provides methods 
+ * for adding top word counts, checking for equality, and printing. Internally, this class 
+ * encapsulates a {@code SortedMap<Integer, Set<String>>}. Some of the analysis methods 
+ * of {@link WordCountAnalyzer} return instances of this class.
+ * 
+ * @author Stoyan Rachev
+ */
 public class TopWordCounts {
     
     private final int number;

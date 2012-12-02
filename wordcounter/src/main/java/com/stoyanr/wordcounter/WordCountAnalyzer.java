@@ -21,6 +21,21 @@ import java.util.Comparator;
 
 import com.stoyanr.util.ForkJoinComputer;
 
+/**
+ * A facility that provides methods for performing analysis on the word counts produced by 
+ * {@link WordCounter}, such as finding the top N most used words. It is initialized with a 
+ * {@link WordCounts} instance, a flag indicating whether to use parallel processing, and 
+ * (optionally) a parallelism level. 
+ * <p>
+ * To use this class, simply instantiate it and then call one of its methods:
+ * <p>
+ * <pre>
+ * // Find the top 10 most used words in wc
+ * new WordCountAnalyzer(wc, true).findTop(10, (x, y) -> (y - x));
+ * </pre>
+ * 
+ * @author Stoyan Rachev
+ */
 public class WordCountAnalyzer {
 
     private static final int THRESHOLD = 32 * 1024;

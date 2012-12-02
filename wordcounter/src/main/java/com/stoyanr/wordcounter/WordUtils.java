@@ -21,6 +21,18 @@ import java.util.functions.UnaryOperator;
 
 import com.stoyanr.util.CharPredicate;
 
+/**
+ * A utility class that provides several overloaded static methods for counting words in strings. 
+ * The central method {@code countWords} accepts a string, a predicate to determine whether a 
+ * character is a word character, and an optional unary operator to be performed on words. 
+ * <p>
+ * <pre>
+ * // Count all words consisting of only alphabetic chars, ignoring case
+ * WordCounts wc = WordUtils.countWords(text, (c) -> Character.isAlphabetic(c), (s) -> s.toLowerCase());
+ * </pre>
+ * 
+ * @author Stoyan Rachev
+ */
 public class WordUtils {
     
     public static WordCounts countWords(String text, CharPredicate pred) {

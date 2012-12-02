@@ -31,6 +31,16 @@ import java.util.functions.BiBlock;
 
 import com.stoyanr.util.Logger;
 
+/**
+ * A list of words mapped to their usage counts. Provides methods for adding word counts, checking 
+ * for equality, printing, and internal iterations over its contents.
+ * Internally, this class encapsulates a {@code Map<String, AtomicInteger>} which is either a 
+ * {@code HashMap} or a {@code ConcurrentHashMap} depending on the parallelism level specified 
+ * upon construction. The word counting methods of {@link WordUtils} and {@link WordCounter} return 
+ * instances of this class.
+ * 
+ * @author Stoyan Rachev
+ */
 public class WordCounts {
     
     private final Map<String, AtomicInteger> m;

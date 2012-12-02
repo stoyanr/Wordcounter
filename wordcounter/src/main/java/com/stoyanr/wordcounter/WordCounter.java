@@ -33,10 +33,25 @@ import com.stoyanr.util.CharPredicate;
 import com.stoyanr.util.FileUtils;
 import com.stoyanr.util.ProducerConsumerExecutor;
 
+/**
+ * A word counter facility that provides a method for counting words in a {@code Path} representing 
+ * a file or a directory tree, either serially or in parallel. It is initialized with a path, 
+ * a predicate to determine whether a character is a word character, an optional unary operator 
+ * to be performed on words, a flag indicating whether to use parallel processing, and (optionally) 
+ * a parallelism level. 
+ * <p>
+ * To use this class, simply instantiate it with the appropriate lambdas and then call its 
+ * {@code count} method:
+ * <p>
+ * <pre>
+ * // Count all words consisting of only alphabetic chars, ignoring case, using parallel processing
+ * new WordCounter(path, (c) -> Character.isAlphabetic(c), (s) -> s.toLowerCase(), true).count();
+ * </pre>
+ * 
+ * @author Stoyan Rachev
+ */
 public class WordCounter {
 
-    private static final int MAX_ST_SIZE = 1024 * 1024;
-    
     private final Path path;
     private final CharPredicate pred;
     private final UnaryOperator<String> op;

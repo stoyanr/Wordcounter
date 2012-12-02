@@ -1,6 +1,6 @@
 ## <a id="Introduction"></a>Introduction
 
-**Wordcounter** is a Java library and command-line utility for counting words in text files and directory trees and performing analysis on the word counts, such as finding the top N most used words in all files. It makes heavy use of parallel computing to use all available cores when performing the analysis.
+**Wordcounter** is a Java library and command-line utility for counting words in text files and directory trees and performing analysis on the word counts, such as finding the top N most used words in all files. It makes heavy use of functional programming constructs and parallel computing approaches to utilize all available cores when performing the analysis.
 
 The library uses JDK 8 [lambdas](http://openjdk.java.net/projects/lambda/), as well as new JDK 7 features such as [Fork / Join](http://docs.oracle.com/javase/tutorial/essential/concurrency/forkjoin.html) and [NIO.2](http://docs.oracle.com/javase/tutorial/essential/io/fileio.html). It is built and can only be used with the [early access version of JDK 8 with lambda support](http://jdk8.java.net/lambda/).
 
@@ -42,7 +42,7 @@ Similarly to [Feeder](https://github.com/stoyanr/Feeder), [Todor](https://github
 To start the command line program, execute the following command:
 
 ```
-java -jar wordcounter-1.0.jar <options>
+java -jar wordcounter-1.0.4.jar <options>
 ```
 
 All options have reasonable default values so none of them is mandatory. Using the defaults for all options results in finding the top 10 most used words in the current directory and its subdirectories.
@@ -62,6 +62,8 @@ Examples:
 + Find the bottom 5 least used words in the directory "wordsx", considering numbers as word characters, ignoring case, with info logging: `-p wordsx -m bottom -d 1234567890 -i -n 5 -l info`
 
 ## <a id="Design"></a>Design
+
+The design of the library partitions the problem into generic parallel processing utilities, classes that encapsulate the data structures used to represent raw and sorted word counts, and finally classes that perform the counting and analysis using the capabilities of the previous two groups. Practically all of these classes use instances of functional interfaces quite a lot in order to allow specific customizations to their generic behavior. This results in code which is heavily infused with lambda expressions and method references. Welcome to the world of functional programming in Java!
 
 ### Generic Parallel Processing Utilities
 
@@ -117,19 +119,17 @@ Similarly to `ForkJoinComputer`, this class can be used by simply instantiating 
 See:
 + [ProducerConsumerExecutor.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/util/ProducerConsumerExecutor.java)
 
-### Wordcounter Classes
+### Data Structure Classes
 
-#### The WordCounts and TopWordCounts Classes
-
-These two classes encapsulate the data structures used to represent raw and sorted word counts.
-
-The `WordCounts` class represents a list of words mapped to their usage counts. It provides methods for adding word counts, checking for equality, printing, and internal iterations over its contents. Internally, this class encapsulates a `Map<String, AtomicInteger>` which is either a `HashMap` or a `ConcurrentHashMap` depending on the parallelism level specified upon construction. The word counting methods of `WordUtils` and `WordCounter` return instances of this class.
-
-The `TopWordCounts` class represents a sorted list of word usage counts mapped to all words that have such counts. It provides methods for adding top word counts, checking for equality, and printing. Internally, this class encapsulates a `SortedMap<Integer, Set<String>>`. Some of the analysis methods of `WordCountAnalyzer` return instances of this class.
+These classes encapsulate the data structures used to represent raw and sorted word counts.
++ The `WordCounts` class represents a list of words mapped to their usage counts. It provides methods for adding word counts, checking for equality, printing, and internal iterations over its contents. Internally, this class encapsulates a `Map<String, AtomicInteger>` which is either a `HashMap` or a `ConcurrentHashMap` depending on the parallelism level specified upon construction. The word counting methods of `WordUtils` and `WordCounter` return instances of this class.
++ The `TopWordCounts` class represents a sorted list of word usage counts mapped to all words that have such counts. It provides methods for adding top word counts, checking for equality, and printing. Internally, this class encapsulates a `SortedMap<Integer, Set<String>>`. Some of the analysis methods of `WordCountAnalyzer` return instances of this class.
 
 See:
 + [WordCounts.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCounts.java)
 + [TopWordCounts.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/TopWordCounts.java)
+
+### Word Counting and Analysis Classes
 
 #### The WordUtils Utility Class
 
@@ -149,7 +149,7 @@ The `WordCounter` class provides a method for counting words in a `Path` represe
 
 ```java
 // Count all words consisting of only alphabetic chars, ignoring case, using parallel processing
-new WordCounter(path, (c) -> Character.isAlphabetic(c), (s) -> s.toLowerCase(), true).count();
+WordCounts wc = new WordCounter(path, (c) -> Character.isAlphabetic(c), (s) -> s.toLowerCase(), true).count();
 ```
 
 The parallel implementation uses `ProducerConsumerExecutor<Path, String>`. The producer simply walks the directory tree and produces `Path` instances. The mediators read the files into text pieces, and the consumers count the words in each text piece and collect them in a single `WordCounts` instance. This is done with the following piece of code:
@@ -174,10 +174,10 @@ The `WordCountAnalyzer` class provides methods for performing analysis on the wo
 
 ```java
 // Find the top 10 most used words in wc
-new WordCountAnalyzer(wc, true).findTop(10, (x, y) -> (y - x));
+TopWordCounts twc = new WordCountAnalyzer(wc, true).findTop(10, (x, y) -> (y - x));
 ```
 
-The differnet analysis types implement the internal `Analysis<T>` interface, which is defined as follows:
+The different analysis types implement the internal `Analysis<T>` interface, which is defined as follows:
 
 ```java
 interface Analysis<T> {
@@ -215,3 +215,28 @@ public TopWordCounts compute(int lo, int hi) {
 
 See:
 + [WordCountAnalyzer.java](Wordcounter/blob/master/wordcounter/src/main/java/com/stoyanr/wordcounter/WordCountAnalyzer.java)
+
+## Performance
+
+I found that the parallel Producer / Consumer word counting implementation is adapting nicely to the different number of cores and I/O speeds. It is significantly faster than the serial implementation. Unlike it, the parallel Fork / Join analysis implementation is only faster than the serial one when testing with an unrealistically large number of unique words, and only by a mild degree. With small number of unique words, it is actually *slower* than the serial one.
+
+The table below compares the performance of word counting and analysis under the following conditions:
++ CPU AMD Phenom II X4 965 3.4 GHz (4 cores), 4 GB RAM, Windows 7, JDK 8
++ Default options: words consisting of alphabetic characters, case-sensitive
++ Default parallelism level, equal to the number of cores
+
+### Word Counting Performance
+
+Implementation      Files    Words  Size (MB)   Time (ms)
+------------------ ------ -------- ---------- -----------
+Serial                  1 10000000        ~65 2200 - 2400
+Parallel                1 10000000        ~65  500 -  600
+Serial                100 10000000        ~65 1600 - 1800
+Parallel              100 10000000        ~65  500 -  600
+
+### Find Top Analysis Performance
+
+Implementation        Words  Max Count  Top   Time (ms)
+------------------ -------- ---------- ---- -----------
+Serial              2000000   10000000   10   200 - 250
+Parallel            2000000   10000000   10   200 - 250

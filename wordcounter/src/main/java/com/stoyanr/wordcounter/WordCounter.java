@@ -26,8 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.functions.Block;
-import java.util.functions.UnaryOperator;
+import java.util.function.Block;
+import java.util.function.UnaryOperator;
 
 import com.stoyanr.util.CharPredicate;
 import com.stoyanr.util.FileUtils;
@@ -119,9 +119,9 @@ public class WordCounter {
     private void collectPaths(Block<Path> block) {
         try {
             if (Files.isDirectory(path)) {
-                Files.walkFileTree(path, new FileVisitor((file) -> block.apply(file)));
+                Files.walkFileTree(path, new FileVisitor((file) -> block.accept(file)));
             } else {
-                block.apply(path);
+                block.accept(path);
             }
         } catch (IOException e) {
             throw new WordCounterException(String.format("Can't walk directory tree %s: %s", 
@@ -145,7 +145,7 @@ public class WordCounter {
         String rem = (state != null) ? state : "";
         String textx = rem + text.substring(0, ei);
         rem = text.substring(ei);
-        block.apply(textx);
+        block.accept(textx);
         return rem;
     }
     
@@ -159,7 +159,7 @@ public class WordCounter {
 
         @Override
         public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-            block.apply(file);
+            block.accept(file);
             return FileVisitResult.CONTINUE;
         }
     }

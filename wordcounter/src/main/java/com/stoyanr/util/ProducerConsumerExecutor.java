@@ -22,7 +22,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.functions.Block;
+import java.util.function.Block;
 
 /**
  * A generic Producer / Consumer executor. It starts a single producer task and multiple mediator

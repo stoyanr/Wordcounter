@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.functions.BiBlock;
+import java.util.function.BiBlock;
 
 import com.stoyanr.util.Logger;
 

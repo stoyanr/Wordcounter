@@ -17,7 +17,7 @@
  */
 package com.stoyanr.wordcounter;
 
-import java.util.functions.UnaryOperator;
+import java.util.function.UnaryOperator;
 
 import com.stoyanr.util.CharPredicate;
 

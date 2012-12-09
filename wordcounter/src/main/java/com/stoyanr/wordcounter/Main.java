@@ -23,7 +23,7 @@ import java.nio.file.Paths;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.functions.UnaryOperator;
+import java.util.function.UnaryOperator;
 
 import com.stoyanr.util.Arguments;
 import com.stoyanr.util.ArgumentsException;

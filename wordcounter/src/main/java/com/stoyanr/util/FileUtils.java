@@ -17,6 +17,8 @@
  */
 package com.stoyanr.util;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousFileChannel;
@@ -38,6 +40,17 @@ public class FileUtils {
             sb.append(text);
             return x;
         });
+        return sb.toString();
+    }
+
+    public static String readLinesToString(Path file) throws IOException {
+        final StringBuilder sb = new StringBuilder();
+        try (BufferedReader reader = new BufferedReader(new FileReader(file.toFile()), BUF_SIZE)) {
+            reader.lines().forEach(line -> {
+                sb.append(line);
+                sb.append('\n');
+            });
+        }
         return sb.toString();
     }
 

@@ -55,7 +55,7 @@ public class WordUtils {
             if (bi != ei) {
                 String word = text.substring(bi, ei);
                 if (op != null) {
-                    word = op.operate(word);
+                    word = op.apply(word);
                 }
                 result.add(word, 1);
             }

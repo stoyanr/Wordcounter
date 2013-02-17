@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.BiBlock;
+import java.util.function.BiConsumer;
 
 import com.stoyanr.util.Logger;
 
@@ -98,7 +98,7 @@ public class WordCounts {
         }
     }
     
-    public void forEachInRange(int lo, int hi, BiBlock<String, Integer> block) {
+    public void forEachInRange(int lo, int hi, BiConsumer<String, Integer> block) {
         Iterator<Map.Entry<String, AtomicInteger>> it = m.entrySet().iterator();
         for (int i = 0; i < lo; i++) {
             it.next();

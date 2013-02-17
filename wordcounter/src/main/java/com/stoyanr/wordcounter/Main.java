@@ -175,7 +175,7 @@ public class Main {
     }
     
     private UnaryOperator<String> getOperator() {
-        return (ignoreCase) ? (s) -> s.toLowerCase() : null;
+        return (ignoreCase) ? String::toLowerCase : null;
     }
     
     private static void reportError(final Exception e) {

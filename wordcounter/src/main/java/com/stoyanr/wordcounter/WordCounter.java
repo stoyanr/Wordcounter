@@ -110,8 +110,8 @@ public class WordCounter {
     private WordCounts countPar() {
         final WordCounts wc = new WordCounts(parLevel);
         new ProducerConsumerExecutor<Path, String>(
-            (block) -> collectPaths(block), 
-            (file, block) -> readFileToBlock(file, block),
+                this::collectPaths,
+                this::readFileToBlock,
             (text) -> wc.add(countWords(text, pred, op)), parLevel).execute();
         return wc;
     }
@@ -119,7 +119,7 @@ public class WordCounter {
     private void collectPaths(Block<Path> block) {
         try {
             if (Files.isDirectory(path)) {
-                Files.walkFileTree(path, new FileVisitor((file) -> block.accept(file)));
+                Files.walkFileTree(path, new FileVisitor(block::accept));
             } else {
                 block.accept(path);
             }

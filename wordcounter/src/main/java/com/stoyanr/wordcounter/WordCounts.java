@@ -105,7 +105,7 @@ public class WordCounts {
         }
         for (int i = lo; i < hi; i++) {
             Map.Entry<String, AtomicInteger> e = it.next();
-            block.apply(e.getKey(), e.getValue().get());
+            block.accept(e.getKey(), e.getValue().get());
         }
     }
 

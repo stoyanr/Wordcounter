@@ -26,7 +26,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.function.Block;
+import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
 import com.stoyanr.util.CharPredicate;
@@ -116,7 +116,7 @@ public class WordCounter {
         return wc;
     }
 
-    private void collectPaths(Block<Path> block) {
+    private void collectPaths(Consumer<Path> block) {
         try {
             if (Files.isDirectory(path)) {
                 Files.walkFileTree(path, new FileVisitor(block::accept));
@@ -129,7 +129,7 @@ public class WordCounter {
         }
     }
     
-    private void readFileToBlock(Path file, Block<String> block) {
+    private void readFileToBlock(Path file, Consumer<String> block) {
         try {
             FileUtils.readFileAsync(file, (String text, String state) -> { 
                 return applyText(text, state, block); 
@@ -140,7 +140,7 @@ public class WordCounter {
         }
     }
 
-    private String applyText(String text, String state, Block<String> block) {
+    private String applyText(String text, String state, Consumer<String> block) {
         int ei = getEndWordIndex(text, pred);
         String rem = (state != null) ? state : "";
         String textx = rem + text.substring(0, ei);
@@ -151,9 +151,9 @@ public class WordCounter {
     
     final static class FileVisitor extends SimpleFileVisitor<Path> {
     
-        private final Block<Path> block;
+        private final Consumer<Path> block;
 
-        public FileVisitor(Block<Path> block) {
+        public FileVisitor(Consumer<Path> block) {
             this.block = block;
         }
 

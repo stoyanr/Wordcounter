@@ -22,7 +22,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Block;
 
 /**
  * A generic Producer / Consumer executor. It starts a single producer task and multiple mediator
@@ -41,7 +40,7 @@ public class ProducerConsumerExecutor<T1, T2> {
     public static final int DEFAULT_PAR_LEVEL = Runtime.getRuntime().availableProcessors();
     
     public interface Producer<T> {
-        void produce(Block<T> block);
+        void produce(java.util.function.Consumer<T> block);
     }
     
     public interface Consumer<T> {
@@ -49,7 +48,7 @@ public class ProducerConsumerExecutor<T1, T2> {
     }
     
     public interface Mediator<T1, T2> {
-        void mediate(T1 t, Block<T2> block);
+        void mediate(T1 t, java.util.function.Consumer<T2> block);
     }
     
     private final Producer<T1> producer;
@@ -134,7 +133,7 @@ public class ProducerConsumerExecutor<T1, T2> {
         return ses.awaitTermination(24, TimeUnit.HOURS);
     }
     
-    private void mediate(Mediator<T1, T2> mediator, Block<T2> block) {
+    private void mediate(Mediator<T1, T2> mediator, java.util.function.Consumer<T2> block) {
         boolean finished = false;
         while (!finished) {
             try {
